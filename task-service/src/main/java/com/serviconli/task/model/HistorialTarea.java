@@ -21,7 +21,7 @@ public class HistorialTarea {
     @JoinColumn(name = "tarea_id", nullable = false)
     private Tarea tarea;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = true, length = 30) // <-- Modificación aquí
     @Enumerated(EnumType.STRING)
     private EstadoTarea estadoAnterior;
 
