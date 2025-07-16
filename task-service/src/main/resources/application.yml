@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/task_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password:  # ¡ADVERTENCIA! Cambia esta contraseña en un entorno de producción.
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 'update' creará/actualizará tablas automáticamente. ¡Cuidado en producción!
+    show-sql: true # Muestra las sentencias SQL en la consola. Útil para depuración.
+    properties:
+      hibernate:
+        format_sql: true # Formatea el SQL para una mejor legibilidad.
+        dialect: org.hibernate.dialect.MySQL8Dialect # Dialecto de Hibernate para MySQL 8.x
+  application:
+    name: task-service
+
+server:
+  port: 8081 # Puerto en el que se ejecutará el microservicio task-service
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG # Muestra las sentencias SQL ejecutadas
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE # Muestra los parámetros de las sentencias SQL
+    com:
+      serviconli: DEBUG # Nivel de log para nuestros paquetes
