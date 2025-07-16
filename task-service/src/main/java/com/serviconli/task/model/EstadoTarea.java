@@ -2,8 +2,9 @@ package com.serviconli.task.model;
 
 public enum EstadoTarea {
 
-    PENDENTE,
+    PENDIENTE,
     EN_PROGRESO,
     CITA_CONFIRMADA,
-    NOTIFICADA
+    COMPLETADA,
+    ENVIADA
 }
