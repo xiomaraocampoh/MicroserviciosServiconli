@@ -57,6 +57,24 @@ public class Tarea {
 
     private LocalDateTime fechaRecordatorio; // Opcional, para recordatorios futuros
 
+
+    @Column(length = 100)
+    private String telefono;
+
+    @Column(length = 100)
+    private String doctor;
+
+    @Column(length = 100)
+    private String ubicacion;
+
+    @Column(length = 20)
+    private String fecha; // Recomendado: usar LocalDate si es solo fecha de la cita
+
+    @Column(length = 10)
+    private String hora; // Recomendado: usar LocalTime si es solo hora de la cita
+
+
+
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();

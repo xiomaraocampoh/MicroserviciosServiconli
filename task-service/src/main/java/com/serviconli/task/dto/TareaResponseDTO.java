@@ -23,5 +23,11 @@ public class TareaResponseDTO {
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
     private LocalDateTime fechaRecordatorio;
+    private String telefono;
+    private String doctor;
+    private String ubicacion;
+    private String fecha;
+    private String hora;
+
     // Podríamos incluir una lista de HistorialTareaResponseDTO aquí si queremos el historial directamente en la respuesta de la tarea
 }

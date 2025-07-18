@@ -35,4 +35,12 @@ public class TareaRequestDTO {
     private String observaciones;
 
     private LocalDateTime fechaRecordatorio;
+
+    private String telefono;
+    private String doctor;
+    private String ubicacion;
+    private String fecha;
+    private String hora;
+
+
 }

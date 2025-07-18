@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -225,88 +226,26 @@ function addNotes(id) {
     renderTasks();
   }
 }
-  function generateReport() {
-        const filteredTasks = getFilteredTasks();
 
-        if (filteredTasks.length === 0) {
-            showNotification('No hay tareas para generar el reporte', 'error');
-            return;
-        }
+function generateReport() {
+  const rows = [["ID", "Paciente", "Teléfono", "EPS", "Tipo", "Prioridad", "Estado", "Fecha", "Hora", "Doctor", "Ubicación", "Observaciones"]];
+  getFilteredTasks().forEach(t => rows.push([
+    t.id, t.paciente, t.telefono, t.eps, t.tipo, t.prioridad, t.estado, t.fecha, t.hora, t.doctor, t.ubicacion, t.observaciones
+  ]));
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "reporte_serviconli.csv";
+  a.click();
+}
 
-        // Crear CSV
-        const csvContent = [
-            ['ID', 'Tipo', 'Cliente', 'Prioridad', 'EPS', 'Teléfono', 'Doctor', 'Lugar de Cita', 'Estado', 'Fecha Cita', 'Hora Cita', 'Observaciones'],
-            ...filteredTasks.map(task => [
-                task.id,
-                task.type,
-                task.patient,
-                task.priority,
-                task.eps || '',
-                task.phone || '',
-                task.doctor || '', /* New field in report */
-                task.location || '', /* New field in report */
-                task.status,
-                task.date || '',
-                task.time || '',
-                task.observations || ''
-            ])
-        ].map(row => row.join(',')).join('\n');
-
-        // Descargar archivo
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;'});
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `reporte_tareas_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showNotification('Reporte generado y descargado');
-    }
-
-    function showNotification(message, type = 'success') {
-        const notification = document.getElementById('notification');
-        notification.textContent = message;
-        notification.style.background = type === 'error' ? '#ef4444' : '#10b981';
-        notification.classList.add('show');
-
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
-    }
-
-    function showNotification(message, type = 'success') {
-        const notification = document.getElementById('notification');
-        notification.textContent = message;
-        notification.style.background = type === 'error' ? '#ef4444' : '#10b981';
-        notification.classList.add('show');
-
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
-    }
-
-  // Inicializar la aplicación
-    init();
-
-    // Verificar recordatorios cada minuto
-    setInterval(checkReminders, 60000);
-
-    // Cerrar modal con Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
-
-    // Cerrar modal al hacer clic fuera
-    document.getElementById('taskModal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) {
-            closeModal();
-        }
-    });
+function showNotification(msg, type = "") {
+  const el = document.getElementById("notification");
+  el.textContent = msg;
+  el.className = "notification " + type + " show";
+  setTimeout(() => el.classList.remove("show"), 3000);
+}
 
 function checkReminders() {
   const now = new Date();

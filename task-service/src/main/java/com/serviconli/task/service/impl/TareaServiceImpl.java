@@ -39,22 +39,31 @@ public class TareaServiceImpl implements TareaService {
     public TareaResponseDTO crearTarea(TareaRequestDTO tareaRequestDTO) {
         Tarea tarea = new Tarea();
         BeanUtils.copyProperties(tareaRequestDTO, tarea);
-        tarea.setEstado(EstadoTarea.PENDIENTE); // Estado inicial por defecto
+
+        tarea.setEstado(EstadoTarea.PENDIENTE); // Estado inicial
         tarea.setFechaCreacion(LocalDateTime.now());
         tarea.setFechaActualizacion(LocalDateTime.now());
 
+        // Nuevos campos
+        tarea.setTelefono(tareaRequestDTO.getTelefono());
+        tarea.setDoctor(tareaRequestDTO.getDoctor());
+        tarea.setUbicacion(tareaRequestDTO.getUbicacion());
+        tarea.setFecha(tareaRequestDTO.getFecha());
+        tarea.setHora(tareaRequestDTO.getHora());
+
         Tarea savedTarea = tareaRepository.save(tarea);
 
-        // Registrar el primer estado en el historial
+        // Historial inicial
         HistorialTarea historial = new HistorialTarea();
         historial.setTarea(savedTarea);
-        historial.setEstadoAnterior(null); // No hay estado anterior al crear
+        historial.setEstadoAnterior(null);
         historial.setEstadoNuevo(EstadoTarea.PENDIENTE);
         historial.setDescripcionCambio("Tarea creada con estado PENDIENTE");
         historialTareaRepository.save(historial);
 
         return convertToDto(savedTarea);
     }
+
 
     @Override
     public TareaResponseDTO obtenerTareaPorId(Long id) {
@@ -76,7 +85,7 @@ public class TareaServiceImpl implements TareaService {
         Tarea tareaExistente = tareaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
 
-        // Copiar propiedades que no son nulas del DTO a la entidad existente
+        // Campos existentes
         if (tareaUpdateDTO.getTipo() != null) tareaExistente.setTipo(tareaUpdateDTO.getTipo());
         if (tareaUpdateDTO.getPaciente() != null) tareaExistente.setPaciente(tareaUpdateDTO.getPaciente());
         if (tareaUpdateDTO.getEps() != null) tareaExistente.setEps(tareaUpdateDTO.getEps());
@@ -84,17 +93,26 @@ public class TareaServiceImpl implements TareaService {
         if (tareaUpdateDTO.getObservaciones() != null) tareaExistente.setObservaciones(tareaUpdateDTO.getObservaciones());
         if (tareaUpdateDTO.getFechaRecordatorio() != null) tareaExistente.setFechaRecordatorio(tareaUpdateDTO.getFechaRecordatorio());
 
-        // Si el estado se actualiza directamente a través de este método, se debe registrar en el historial
+        // Nuevos campos
+        if (tareaUpdateDTO.getTelefono() != null) tareaExistente.setTelefono(tareaUpdateDTO.getTelefono());
+        if (tareaUpdateDTO.getDoctor() != null) tareaExistente.setDoctor(tareaUpdateDTO.getDoctor());
+        if (tareaUpdateDTO.getUbicacion() != null) tareaExistente.setUbicacion(tareaUpdateDTO.getUbicacion());
+        if (tareaUpdateDTO.getFecha() != null) tareaExistente.setFecha(tareaUpdateDTO.getFecha());
+        if (tareaUpdateDTO.getHora() != null) tareaExistente.setHora(tareaUpdateDTO.getHora());
+
+        // Cambiar estado si viene en la petición
         if (tareaUpdateDTO.getEstado() != null && !tareaUpdateDTO.getEstado().equals(tareaExistente.getEstado())) {
             EstadoTarea estadoAnterior = tareaExistente.getEstado();
             tareaExistente.setEstado(tareaUpdateDTO.getEstado());
-            registrarHistorialCambioEstado(tareaExistente, estadoAnterior, tareaExistente.getEstado(), "Actualización directa de estado");
+            registrarHistorialCambioEstado(tareaExistente, estadoAnterior, tareaUpdateDTO.getEstado(), "Actualización directa de estado");
         }
 
         tareaExistente.setFechaActualizacion(LocalDateTime.now());
+
         Tarea updatedTarea = tareaRepository.save(tareaExistente);
         return convertToDto(updatedTarea);
     }
+
 
     @Override
     @Transactional
