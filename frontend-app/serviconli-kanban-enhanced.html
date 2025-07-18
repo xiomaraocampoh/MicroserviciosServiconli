@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Serviconli - Gestión de Tareas Médicas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="header">
+  <h1>Gestión de Tareas Médicas - Serviconli</h1>
+</div>
+
+<!-- Filtros -->
+<div class="controls">
+  <select id="filterStatus"><option value="">Estado</option></select>
+  <select id="filterType"><option value="">Tipo</option></select>
+  <select id="filterPriority"><option value="">Prioridad</option></select>
+  <button onclick="generateReport()">📊 Reporte</button>
+  <button onclick="openNewTaskModal()">+ Nueva</button>
+</div>
+
+<!-- Columnas del tablero Kanban -->
+<div class="kanban-board" id="kanban">
+  <!-- Columnas dinámicas generadas por JS -->
+</div>
+
+<!-- Modal de Tarea -->
+<div id="taskModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h2 id="modalTitle">Nueva Tarea</h2>
+    <form id="taskForm">
+      <input id="taskPatient" placeholder="Paciente" required />
+      <input id="taskPhone" placeholder="Teléfono" />
+      <input id="taskEPS" placeholder="EPS" />
+      <input id="taskDoctor" placeholder="Doctor" />
+      <input id="taskLocation" placeholder="Ubicación" />
+      <input id="taskDate" type="date" placeholder="Fecha" />
+      <input id="taskTime" type="time" placeholder="Hora" />
+      <select id="taskType">
+        <option value="consulta">Consulta</option>
+        <option value="examen">Examen</option>
+        <option value="procedimiento">Procedimiento</option>
+        <option value="especialista">Especialista</option>
+      </select>
+      <select id="taskPriority">
+        <option value="ALTA">Alta</option>
+        <option value="MEDIA">Media</option>
+        <option value="BAJA">Baja</option>
+      </select>
+      <textarea id="taskObservations" placeholder="Observaciones"></textarea>
+    </form>
+    <button onclick="saveTask()">Guardar</button>
+    <button onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<script>
+const API_URL = "http://localhost:8080/api/v1/tareas";
+let tasks = [];
+let currentEditId = null;
+
+const statusOrder = ['PENDIENTE', 'EN_PROGRESO', 'CITA_CONFIRMADA', 'COMPLETADA', 'ENVIADA'];
+
+function init() {
+  loadTasks();
+  setupEventListeners();
+  setInterval(checkReminders, 60000);
+}
+
+function setupEventListeners() {
+  document.getElementById("filterStatus").addEventListener("change", renderTasks);
+  document.getElementById("filterType").addEventListener("change", renderTasks);
+  document.getElementById("filterPriority").addEventListener("change", renderTasks);
+}
+
+async function loadTasks() {
+  try {
+    const res = await fetch(API_URL);
+    tasks = await res.json();
+    renderTasks();
+  } catch (error) {
+    console.error("Error al cargar tareas:", error);
+    showNotification("Error al cargar tareas", "error");
+  }
+}
+
+function renderTasks() {
+  const kanban = document.getElementById("kanban");
+  kanban.innerHTML = "";
+  statusOrder.forEach(status => {
+    const column = document.createElement("div");
+    column.className = "kanban-column";
+    column.innerHTML = `<h3>${status} (<span id="count-${status}">0</span>)</h3><div id="column-${status}" class="column-content"></div>`;
+    kanban.appendChild(column);
+  });
+
+  const filtered = getFilteredTasks();
+  statusOrder.forEach(status => {
+    const col = document.getElementById(`column-${status}`);
+    const statusTasks = filtered.filter(t => t.estado === status);
+    statusTasks.forEach(task => col.appendChild(createTaskCard(task)));
+    document.getElementById(`count-${status}`).textContent = statusTasks.length;
+  });
+}
+
+function getFilteredTasks() {
+  const f1 = document.getElementById("filterStatus").value;
+  const f2 = document.getElementById("filterType").value;
+  const f3 = document.getElementById("filterPriority").value;
+  return tasks.filter(t =>
+    (!f1 || t.estado === f1) &&
+    (!f2 || t.tipo === f2) &&
+    (!f3 || t.prioridad === f3)
+  );
+}
+
+function createTaskCard(task) {
+  const card = document.createElement("div");
+  card.className = "task-card";
+  card.innerHTML = `
+    <h4>${task.tipo}</h4>
+    <p>👤 ${task.paciente} | ☎ ${task.telefono || "N/A"}</p>
+    <p>🏥 ${task.eps || "N/A"} | 👨‍⚕️ ${task.doctor || "N/A"}</p>
+    <p>📍 ${task.ubicacion || "-"} | 📅 ${task.fecha || "-"} ${task.hora || ""}</p>
+    <p>📝 ${task.observaciones || ""}</p>
+    <div class="task-actions">
+      <button onclick="sendWhatsApp(${task.id})">📲 WhatsApp</button>
+      <button onclick="editTask(${task.id})">✏️</button>
+      <button onclick="addNotes(${task.id})">🗒️</button>
+      <button onclick="advanceStatus(${task.id})">➡️</button>
+    </div>`;
+  return card;
+}
+
+function advanceStatus(id) {
+  const task = tasks.find(t => t.id === id);
+  const index = statusOrder.indexOf(task.estado);
+  if (index < statusOrder.length - 1) {
+    const next = statusOrder[index + 1];
+    fetch(`${API_URL}/${id}/estado`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nuevoEstado: next })
+    }).then(() => {
+      task.estado = next;
+      renderTasks();
+      showNotification("Estado actualizado");
+    }).catch(() => showNotification("Error al avanzar estado", "error"));
+  }
+}
+
+function openNewTaskModal() {
+  currentEditId = null;
+  document.getElementById("taskForm").reset();
+  document.getElementById("modalTitle").textContent = "Nueva Tarea";
+  document.getElementById("taskModal").style.display = "block";
+}
+
+function closeModal() {
+  document.getElementById("taskModal").style.display = "none";
+}
+
+function editTask(id) {
+  const t = tasks.find(t => t.id === id);
+  currentEditId = id;
+  document.getElementById("modalTitle").textContent = "Editar Tarea";
+  document.getElementById("taskPatient").value = t.paciente;
+  document.getElementById("taskPhone").value = t.telefono || "";
+  document.getElementById("taskEPS").value = t.eps || "";
+  document.getElementById("taskDoctor").value = t.doctor || "";
+  document.getElementById("taskLocation").value = t.ubicacion || "";
+  document.getElementById("taskDate").value = t.fecha || "";
+  document.getElementById("taskTime").value = t.hora || "";
+  document.getElementById("taskType").value = t.tipo;
+  document.getElementById("taskPriority").value = t.prioridad;
+  document.getElementById("taskObservations").value = t.observaciones || "";
+  document.getElementById("taskModal").style.display = "block";
+}
+
+function saveTask() {
+  const data = {
+    paciente: document.getElementById("taskPatient").value,
+    telefono: document.getElementById("taskPhone").value,
+    eps: document.getElementById("taskEPS").value,
+    doctor: document.getElementById("taskDoctor").value,
+    ubicacion: document.getElementById("taskLocation").value,
+    fecha: document.getElementById("taskDate").value,
+    hora: document.getElementById("taskTime").value,
+    tipo: document.getElementById("taskType").value,
+    prioridad: document.getElementById("taskPriority").value,
+    observaciones: document.getElementById("taskObservations").value
+  };
+
+  const method = currentEditId ? "PUT" : "POST";
+  const url = currentEditId ? `${API_URL}/${currentEditId}` : API_URL;
+
+  fetch(url, {
+    method: method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(currentEditId ? { ...data, id: currentEditId } : data)
+  }).then(() => {
+    closeModal();
+    loadTasks();
+    showNotification(currentEditId ? "Tarea actualizada" : "Tarea creada");
+  }).catch(() => showNotification("Error al guardar", "error"));
+}
+
+function sendWhatsApp(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t.telefono) return showNotification("Sin número", "error");
+  const msg = `Hola señor/a ${t.paciente}, le escribe Biviana de la Central de Citas de Serviconli. Su cita es el ${t.fecha} a las ${t.hora} en ${t.ubicacion}, con ${t.doctor}. ¡Gracias por confiar en Serviconli!`;
+  const url = `https://wa.me/57${t.telefono}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+}
+
+function addNotes(id) {
+  const task = tasks.find(t => t.id === id);
+  const notes = prompt("Observaciones:", task.observaciones || "");
+  if (notes !== null) {
+    task.observaciones = notes;
+    renderTasks();
+  }
+}
+  function generateReport() {
+        const filteredTasks = getFilteredTasks();
+
+        if (filteredTasks.length === 0) {
+            showNotification('No hay tareas para generar el reporte', 'error');
+            return;
+        }
+
+        // Crear CSV
+        const csvContent = [
+            ['ID', 'Tipo', 'Cliente', 'Prioridad', 'EPS', 'Teléfono', 'Doctor', 'Lugar de Cita', 'Estado', 'Fecha Cita', 'Hora Cita', 'Observaciones'],
+            ...filteredTasks.map(task => [
+                task.id,
+                task.type,
+                task.patient,
+                task.priority,
+                task.eps || '',
+                task.phone || '',
+                task.doctor || '', /* New field in report */
+                task.location || '', /* New field in report */
+                task.status,
+                task.date || '',
+                task.time || '',
+                task.observations || ''
+            ])
+        ].map(row => row.join(',')).join('\n');
+
+        // Descargar archivo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;'});
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `reporte_tareas_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showNotification('Reporte generado y descargado');
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.background = type === 'error' ? '#ef4444' : '#10b981';
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.background = type === 'error' ? '#ef4444' : '#10b981';
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+  // Inicializar la aplicación
+    init();
+
+    // Verificar recordatorios cada minuto
+    setInterval(checkReminders, 60000);
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('taskModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            closeModal();
+        }
+    });
+
+function checkReminders() {
+  const now = new Date();
+  tasks.forEach(t => {
+    if ((t.estado === "PENDIENTE" || t.estado === "EN_PROGRESO") && t.fecha && t.hora) {
+      const dt = new Date(`${t.fecha}T${t.hora}`);
+      if (now >= new Date(dt.getTime() - 5 * 60000) && now < dt) {
+        showNotification(`⏰ Cita de ${t.paciente} en 5 minutos`, "warn");
+      }
+    }
+  });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
