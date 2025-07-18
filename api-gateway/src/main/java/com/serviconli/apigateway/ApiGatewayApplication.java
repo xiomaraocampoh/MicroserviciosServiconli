@@ -1,4 +1,4 @@
-package com.serviconli.gateway;
+package com.serviconli.apigateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

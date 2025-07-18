@@ -1,4 +1,4 @@
-package com.serviconli.gateway;
+package com.serviconli.apigateway;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

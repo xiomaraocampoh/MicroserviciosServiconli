@@ -1,46 +1,34 @@
 server:
-  port: 8080 # Puerto en el que se ejecutará el API Gateway
+  port: 8080
+
+jwt:
 
 spring:
-  application:
-    name: api-gateway
   cloud:
     gateway:
+      default-filters:
+        - PreserveHostHeader
       routes:
-        - id: task-service # Identificador de la ruta
-          uri: lb://TASK-SERVICE # URI de destino. 'lb://' indica que usará LoadBalancer. 'TASK-SERVICE' debe coincidir con el nombre de la aplicación del microservicio.
+        - id: task_service_route # Un ID único para esta ruta
+          uri: http://localhost:8081 # La URL de tu task-service
           predicates:
-            - Path=/api/v1/tareas/** # Las solicitudes que coincidan con este patrón se enrutarán
-          filters:
-            - StripPrefix=0 # No elimina prefijos de la ruta
-    loadbalancer:
-      ribbon: # Configuración opcional para LoadBalancer (Ribbon es el cliente de balanceo de carga si no se usa Eureka)
-        enabled: false # Deshabilita Ribbon si no estás usando un servidor Eureka/LoadBalancer explícito
-        # En Spring Cloud LoadBalancer (sustituto de Ribbon), la configuración se hace de forma diferente.
-        # Por ahora, simplemente confiamos en el descubrimiento por nombre de servicio si no hay Eureka.
+            - Path=/api/v1/tareas/** # Todas las peticiones que empiecen con /api/v1/tareas/
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*" # Expone todos los endpoints de Actuator
-  endpoint:
-    health:
-      show-details: always # Muestra detalles completos de la salud
-    gateway:
-      enabled: true # Habilita el endpoint de Actuator para el Gateway
-
-# Configuración CORS (Cross-Origin Resource Sharing)
-# Esto es importante si tu frontend (ej. un SPA) se ejecuta en un dominio/puerto diferente
-cors:
-  allowed-origins: "*" # Permite cualquier origen. ¡Ajustar en producción a los dominios específicos de tu frontend!
-  allowed-methods:
-    - GET
-    - POST
-    - PUT
-    - DELETE
-    - PATCH
-    - OPTIONS
-  allowed-headers: "*" # Permite todos los encabezados
-  allow-credentials: true
-  max-age: 3600 # Cache preflight requests for 1 hour
+  webflux:
+    cors:
+      filter:
+        corsConfigurations:
+          '[/**]': # Aplica la configuración a todas las rutas (/**)
+            allowedOrigins:
+              - "http://localhost:5500" # Permite solicitudes desde tu frontend (ej. Live Server de VS Code)
+              - "http://127.0.0.1:5500" # A veces, el navegador usa 127.0.0.1 en lugar de localhost
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+            allowedHeaders:
+              - "*" # Permite todos los headers
+            allowCredentials: true # Permite el envío de credenciales (cookies, headers de autorización)
+            maxAge: 3600 # Cachea los resultados de la pre-verificación de CORS por 1 hora
