@@ -11,14 +11,14 @@ spring:
         - PreserveHostHeader
       routes:
         - id: auth-service
-          uri: lb://auth-service
+          uri: http://localhost:8081
           predicates:
             - Path=/auth/**
 
      # Ruta para el servicio de tareas (protegida)
         - id: task_service_route # Un ID único para esta ruta
           # CORREGIDO: Usando el service ID en lugar de una URL fija
-          uri: lb://tasks-service
+          uri: http://localhost:8082
           predicates:
             - Path=/api/v1/tareas/**
           # ¡AÑADIDO! Aplicando el filtro de seguridad a esta ruta
