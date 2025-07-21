@@ -9,7 +9,6 @@ import com.serviconli.task.exception.ResourceNotFoundException;
 import com.serviconli.task.model.EstadoTarea;
 import com.serviconli.task.model.Prioridad;
 import com.serviconli.task.service.TareaService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -57,18 +56,12 @@ public class TareaController {
         return ResponseEntity.ok(tareaActualizada);
     }
 
+    // Endpoint para eliminar una tarea
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminarTarea(@PathVariable Long id) {
-        try {
-            tareaService.eliminarTarea(id);
-            return ResponseEntity.ok("Tarea eliminada");
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Tarea no encontrada");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar la tarea");
-        }
+    public ResponseEntity<Void> eliminarTarea(@PathVariable Long id) {
+        tareaService.eliminarTarea(id);
+        return ResponseEntity.noContent().build(); // 204 No Content
     }
-
 
     // Endpoint para cambiar el estado de una tarea
     @PatchMapping("/{id}/estado/{nuevoEstado}")

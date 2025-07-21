@@ -13,7 +13,6 @@ import com.serviconli.task.model.Tarea;
 import com.serviconli.task.repository.HistorialTareaRepository;
 import com.serviconli.task.repository.TareaRepository;
 import com.serviconli.task.service.TareaService;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -116,13 +115,15 @@ public class TareaServiceImpl implements TareaService {
 
 
     @Override
+    @Transactional
     public void eliminarTarea(Long id) {
         if (!tareaRepository.existsById(id)) {
-            throw new EntityNotFoundException("La tarea con ID " + id + " no existe");
+            throw new ResourceNotFoundException("Tarea no encontrada con ID: " + id);
         }
+        // Opcional: Eliminar historial asociado si se configura en cascada, o si se maneja manualmente.
+        // historialTareaRepository.deleteByTareaId(id); // Necesitaría un método en el repositorio de historial
         tareaRepository.deleteById(id);
     }
-
 
     @Override
     @Transactional
