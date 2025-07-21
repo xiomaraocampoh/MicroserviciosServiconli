@@ -2,6 +2,7 @@ server:
   port: 8080
 
 jwt:
+  secret: ${JWT_SECRET:2LM1OEf2filBHvqs2JMdaQBj2sWCqg7g}
 
 spring:
   cloud:
@@ -9,10 +10,20 @@ spring:
       default-filters:
         - PreserveHostHeader
       routes:
-        - id: task_service_route # Un ID único para esta ruta
-          uri: http://localhost:8081 # La URL de tu task-service
+        - id: auth-service
+          uri: lb://auth-service
           predicates:
-            - Path=/api/v1/tareas/** # Todas las peticiones que empiecen con /api/v1/tareas/
+            - Path=/auth/**
+
+     # Ruta para el servicio de tareas (protegida)
+        - id: task_service_route # Un ID único para esta ruta
+          # CORREGIDO: Usando el service ID en lugar de una URL fija
+          uri: lb://tasks-service
+          predicates:
+            - Path=/api/v1/tareas/**
+          # ¡AÑADIDO! Aplicando el filtro de seguridad a esta ruta
+          filters:
+            - AuthenticationFilterPath=/api/v1/tareas/** # Todas las peticiones que empiecen con /api/v1/tareas/
 
   webflux:
     cors:
