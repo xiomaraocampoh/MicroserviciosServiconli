@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serviconli - Gestión de Tareas Médicas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; }
+    .modal.hidden { display: none; }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-content input, .modal-content textarea, .modal-content select {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .form-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <div class="logo-text">serviconli</div>
+  </div>
+  <div class="user-info">
+    <span>Central de citas - Serviconli</span>
+    <div class="user-avatar">cc</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="filters">
+    <div class="filter-group">
+      <label>Estado</label>
+      <select class="filter-select" id="filterStatus">
+        <option value="">Todos</option>
+        <option value="PENDIENTE">Pendientes</option>
+        <option value="EN_PROGRESO">En Progreso</option>
+        <option value="CITA_CONFIRMADA">Cita Confirmada</option>
+        <option value="COMPLETADA">Completadas</option>
+        <option value="ENVIADA">Enviadas</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Tipo</label>
+      <select class="filter-select" id="filterType">
+        <option value="">Todos</option>
+        <option value="consulta">Consulta</option>
+        <option value="examen">Examen</option>
+        <option value="procedimiento">Procedimiento</option>
+        <option value="especialista">Especialista</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Prioridad</label>
+      <select class="filter-select" id="filterPriority">
+        <option value="">Todas</option>
+        <option value="ALTA">Alta</option>
+        <option value="MEDIA">Media</option>
+        <option value="BAJA">Baja</option>
+        <option value="URGENTE">Urgente</option>
+      </select>
+    </div>
+  </div>
+  <div class="action-buttons">
+    <button class="btn btn-primary" onclick="showCreateForm()">➕ Nueva tarea</button>
+    <button class="btn btn-secondary" onclick="logout()">🔒 Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="kanban-board" id="kanban"></div>
+
+<div class="notification" id="notification"></div>
+
+<div id="taskFormModal" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="formTitle">Nueva Tarea</h3>
+    <form id="taskForm">
+      <input type="hidden" id="taskId" />
+      <input type="text" id="tipo" placeholder="Tipo (consulta, examen...)" required />
+      <input type="text" id="paciente" placeholder="Nombre del paciente" required />
+      <input type="text" id="telefono" placeholder="Teléfono" />
+      <input type="text" id="eps" placeholder="EPS" required />
+      <select id="prioridad" required>
+        <option value="">Prioridad</option>
+        <option value="BAJA">Baja</option>
+        <option value="MEDIA">Media</option>
+        <option value="ALTA">Alta</option>
+        <option value="URGENTE">Urgente</option>
+      </select>
+      <input type="text" id="doctor" placeholder="Doctor" />
+      <input type="text" id="ubicacion" placeholder="Ubicación" />
+      <input type="text" id="fecha" placeholder="Fecha (AAAA-MM-DD)" />
+      <input type="text" id="hora" placeholder="Hora (HH:MM)" />
+      <textarea id="observaciones" placeholder="Observaciones"></textarea>
+      <div class="form-buttons">
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const API_URL = "http://localhost:8080/api/v1/tareas";
+  const token = localStorage.getItem("token");
+  let tasks = [];
+
+  const statusOrder = [
+    "PENDIENTE",
+    "EN_PROGRESO",
+    "CITA_CONFIRMADA",
+    "COMPLETADA",
+    "ENVIADA"
+  ];
+
+  if (!token) {
+    alert("Debes iniciar sesión primero.");
+    window.location.href = "index.html";
+  }
+
+  async function fetchTasks() {
+    try {
+      const res = await fetch(API_URL, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("No autorizado");
+      tasks = await res.json();
+      renderTasks();
+    } catch (e) {
+      showNotification("Error al cargar tareas", "error");
+      console.error(e);
+    }
+  }
+
+  function renderTasks() {
+    const kanban = document.getElementById("kanban");
+    kanban.innerHTML = "";
+
+    statusOrder.forEach(status => {
+      const col = document.createElement("div");
+      col.className = "kanban-column";
+      col.dataset.status = status;
+
+      const tasksFiltered = getFilteredTasks().filter(t => t.estado === status);
+
+      col.innerHTML = `
+        <div class="column-header">
+          <div class="column-title">
+            ${getStatusLabel(status)}
+            <span class="column-count" id="count-${status}">${tasksFiltered.length}</span>
+          </div>
+        </div>
+        <div class="column-content" id="column-${status}">
+          ${tasksFiltered.length === 0 ? `<div class="empty-state">No hay tareas en esta columna</div>` : ""}
+        </div>
+      `;
+      kanban.appendChild(col);
+
+      const content = col.querySelector(".column-content");
+      tasksFiltered.forEach(task => {
+        content.appendChild(createTaskCard(task));
+      });
+    });
+  }
+
+  function getStatusLabel(status) {
+    switch (status) {
+      case "PENDIENTE": return "📋 Pendientes";
+      case "EN_PROGRESO": return "⏳ En Progreso";
+      case "CITA_CONFIRMADA": return "✅ Cita Confirmada";
+      case "COMPLETADA": return "📤 Completadas";
+      case "ENVIADA": return "📨 Enviadas";
+      default: return status;
+    }
+  }
+
+  function getFilteredTasks() {
+    const fStatus = document.getElementById("filterStatus").value;
+    const fType = document.getElementById("filterType").value;
+    const fPriority = document.getElementById("filterPriority").value;
+    return tasks.filter(t =>
+            (!fStatus || t.estado === fStatus) &&
+            (!fType || t.tipo === fType) &&
+            (!fPriority || t.prioridad === fPriority)
+    );
+  }
+
+  function createTaskCard(t) {
+    const card = document.createElement("div");
+    card.className = "task-card";
+    card.innerHTML = `
+      <h4>${t.tipo}</h4>
+      <p>👤 ${t.paciente} | ☎ ${t.telefono || "-"}</p>
+      <p>🏥 ${t.eps || "-"} | 👨‍⚕️ ${t.doctor || "-"}</p>
+      <p>📍 ${t.ubicacion || "-"} | 📅 ${t.fecha || ""} ${t.hora || ""}</p>
+      <p>📝 ${t.observaciones || ""}</p>
+      <div class="task-actions">
+        <button onclick="sendWhatsApp(${t.id})">📲</button>
+        <button onclick="advanceStatus(${t.id})">➡️</button>
+        <button onclick="editTask(${t.id})">✏️</button>
+        <button onclick="deleteTask(${t.id})">🗑️</button>
+      </div>
+    `;
+    return card;
+  }
+
+  async function advanceStatus(id) {
+    const task = tasks.find(t => t.id === id);
+    const currentIndex = statusOrder.indexOf(task.estado);
+    if (currentIndex < statusOrder.length - 1) {
+      const nuevoEstado = statusOrder[currentIndex + 1];
+      try {
+        const res = await fetch(`${API_URL}/${id}/estado/${nuevoEstado}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error("No se pudo actualizar");
+        task.estado = nuevoEstado;
+        renderTasks();
+        showNotification("Estado actualizado");
+      } catch (e) {
+        showNotification("Error al actualizar estado", "error");
+        console.error(e);
+      }
+    }
+  }
+
+  function sendWhatsApp(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t.telefono) return showNotification("Sin número telefónico", "error");
+    const msg = `Hola señor/a ${t.paciente}, le escribe Biviana de la Central de Citas de Serviconli. Le recuerdo su cita el ${t.fecha} a las ${t.hora} en ${t.ubicacion} con el doctor ${t.doctor}. ¡Gracias por confiar en Serviconli!`;
+    const url = `https://wa.me/57${t.telefono}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "index.html";
+  }
+
+  function showNotification(msg, type = "success") {
+    const n = document.getElementById("notification");
+    n.textContent = msg;
+    n.style.background = type === "error" ? "#ef4444" : "#10b981";
+    n.classList.add("show");
+    setTimeout(() => n.classList.remove("show"), 3000);
+  }
+
+  function showCreateForm(task = null) {
+    document.getElementById("formTitle").textContent = task ? "Editar Tarea" : "Nueva Tarea";
+    document.getElementById("taskId").value = task?.id || "";
+    document.getElementById("tipo").value = task?.tipo || "";
+    document.getElementById("paciente").value = task?.paciente || "";
+    document.getElementById("telefono").value = task?.telefono || "";
+    document.getElementById("eps").value = task?.eps || "";
+    document.getElementById("prioridad").value = task?.prioridad || "";
+    document.getElementById("doctor").value = task?.doctor || "";
+    document.getElementById("ubicacion").value = task?.ubicacion || "";
+    document.getElementById("fecha").value = task?.fecha || "";
+    document.getElementById("hora").value = task?.hora || "";
+    document.getElementById("observaciones").value = task?.observaciones || "";
+    document.getElementById("taskFormModal").classList.remove("hidden");
+  }
+
+  function closeForm() {
+    document.getElementById("taskForm").reset();
+    document.getElementById("taskFormModal").classList.add("hidden");
+  }
+
+  document.getElementById("taskForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("taskId").value;
+    const data = {
+      tipo: document.getElementById("tipo").value,
+      paciente: document.getElementById("paciente").value,
+      telefono: document.getElementById("telefono").value,
+      eps: document.getElementById("eps").value,
+      prioridad: document.getElementById("prioridad").value,
+      doctor: document.getElementById("doctor").value,
+      ubicacion: document.getElementById("ubicacion").value,
+      fecha: document.getElementById("fecha").value,
+      hora: document.getElementById("hora").value,
+      observaciones: document.getElementById("observaciones").value
+    };
+
+    const method = id ? "PUT" : "POST";
+    const url = id ? `${API_URL}/${id}` : API_URL;
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) throw new Error("Error al guardar tarea");
+      await fetchTasks();
+      closeForm();
+      showNotification(id ? "Tarea actualizada" : "Tarea creada");
+    } catch (e) {
+      showNotification("Error al guardar", "error");
+      console.error(e);
+    }
+  });
+
+  function editTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if (task) showCreateForm(task);
+  }
+
+  async function deleteTask(id) {
+    console.log("Eliminando tarea ID:", id);
+    if (!confirm("¿Estás seguro de eliminar esta tarea?")) return;
+    try {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Error al eliminar");
+      showNotification("Tarea eliminada");
+      await fetchTasks();
+    } catch (e) {
+      showNotification("No se pudo eliminar", "error");
+      console.error(e);
+    }
+  }
+
+  document.getElementById("filterStatus").addEventListener("change", renderTasks);
+  document.getElementById("filterType").addEventListener("change", renderTasks);
+  document.getElementById("filterPriority").addEventListener("change", renderTasks);
+
+  window.onload = fetchTasks;
+</script>
+</body>
+</html>
