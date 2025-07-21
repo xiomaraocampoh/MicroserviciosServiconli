@@ -23,7 +23,7 @@ spring:
             - Path=/api/v1/tareas/**
           # ¡AÑADIDO! Aplicando el filtro de seguridad a esta ruta
           filters:
-            - AuthenticationFilterPath=/api/v1/tareas/** # Todas las peticiones que empiecen con /api/v1/tareas/
+            - name: AuthenticationFilter # Todas las peticiones que empiecen con /api/v1/tareas/
 
   webflux:
     cors:
