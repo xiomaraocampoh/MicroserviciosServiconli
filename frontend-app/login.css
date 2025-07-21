@@ -1,0 +1,35 @@
+body {
+    background: linear-gradient(135deg, #f2fef3, #d0ece7);
+    font-family: "Segoe UI", sans-serif;
+    min-height: 100vh;
+}
+
+.card {
+    border-radius: 1rem;
+    border: none;
+    background-color: #ffffff;
+}
+
+.card-body {
+    padding: 2.5rem;
+}
+
+h3 {
+    font-weight: 600;
+    color: #138d75;
+}
+
+.btn-success {
+    background-color: #138d75;
+    border-color: #138d75;
+}
+
+.btn-success:hover {
+    background-color: #117a65;
+    border-color: #117a65;
+}
+
+.alert {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
