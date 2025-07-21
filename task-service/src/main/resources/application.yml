@@ -16,7 +16,7 @@ spring:
     name: task-service
 
 server:
-  port: 8081 # Puerto en el que se ejecutará el microservicio task-service
+  port: 8082 # Puerto en el que se ejecutará el microservicio task-service
 
 logging:
   level:
