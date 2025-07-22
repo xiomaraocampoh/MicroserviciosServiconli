@@ -74,6 +74,7 @@
   </div>
   <div class="action-buttons">
     <button class="btn btn-primary" onclick="showCreateForm()">➕ Nueva tarea</button>
+    <button onclick="generateReport()">📥 Generar Reporte CSV</button>
     <button class="btn btn-secondary" onclick="logout()">🔒 Cerrar sesión</button>
   </div>
 </div>
@@ -342,11 +343,31 @@
     }
   }
 
-  document.getElementById("filterStatus").addEventListener("change", renderTasks);
-  document.getElementById("filterType").addEventListener("change", renderTasks);
-  document.getElementById("filterPriority").addEventListener("change", renderTasks);
+  function generateReport() {
+    const filteredTasks = getFilteredTasks();
 
-  window.onload = fetchTasks;
+    if (filteredTasks.length === 0) {
+      showNotification('No hay tareas para generar el reporte', 'error');
+      return;
+    }
+
+    // Crear resumen de estados
+    const estados = ['pendiente', 'progreso', 'confirmada', 'enviada', 'completada'];
+    const resumen = estados.map(estado => {
+      const count = filteredTasks.filter(task => task.status === estado).length;
+      return [`${estado.toUpperCase()}`, count];
+    });
+
+    const estadoMayoritario = resumen.reduce((a, b) => a[1] > b[1] ? a : b)[0];
+
+
+    document.getElementById("filterStatus").addEventListener("change", renderTasks);
+    document.getElementById("filterType").addEventListener("change", renderTasks);
+    document.getElementById("filterPriority").addEventListener("change", renderTasks);
+
+    window.onload = fetchTasks;
+
+  }
 </script>
 </body>
 </html>
