@@ -90,8 +90,10 @@ public class TareaServiceImpl implements TareaService {
         if (tareaUpdateDTO.getPaciente() != null) tareaExistente.setPaciente(tareaUpdateDTO.getPaciente());
         if (tareaUpdateDTO.getEps() != null) tareaExistente.setEps(tareaUpdateDTO.getEps());
         if (tareaUpdateDTO.getPrioridad() != null) tareaExistente.setPrioridad(tareaUpdateDTO.getPrioridad());
-        if (tareaUpdateDTO.getObservaciones() != null) tareaExistente.setObservaciones(tareaUpdateDTO.getObservaciones());
-        if (tareaUpdateDTO.getFechaRecordatorio() != null) tareaExistente.setFechaRecordatorio(tareaUpdateDTO.getFechaRecordatorio());
+        if (tareaUpdateDTO.getObservaciones() != null)
+            tareaExistente.setObservaciones(tareaUpdateDTO.getObservaciones());
+        if (tareaUpdateDTO.getFechaRecordatorio() != null)
+            tareaExistente.setFechaRecordatorio(tareaUpdateDTO.getFechaRecordatorio());
 
         // Nuevos campos
         if (tareaUpdateDTO.getTelefono() != null) tareaExistente.setTelefono(tareaUpdateDTO.getTelefono());
@@ -165,8 +167,7 @@ public class TareaServiceImpl implements TareaService {
             tareas = tareaRepository.findByPacienteContainingIgnoreCase(paciente);
         } else if (eps != null && !eps.isEmpty()) {
             tareas = tareaRepository.findByEpsContainingIgnoreCase(eps);
-        }
-        else {
+        } else {
             tareas = tareaRepository.findAll();
         }
         return tareas.stream()
@@ -214,20 +215,19 @@ public class TareaServiceImpl implements TareaService {
      * Define las transiciones de estado válidas para el sistema Kanban.
      */
     private boolean isValidTransition(EstadoTarea estadoActual, EstadoTarea nuevoEstado) {
-        if (estadoActual == nuevoEstado) {
-            return true; // No hay cambio de estado, es válido.
-        }
+        if (estadoActual == nuevoEstado) return true;
+
         switch (estadoActual) {
             case PENDIENTE:
                 return nuevoEstado == EstadoTarea.EN_PROGRESO;
             case EN_PROGRESO:
-                return nuevoEstado == EstadoTarea.CITA_CONFIRMADA || nuevoEstado == EstadoTarea.COMPLETADA;
+                return nuevoEstado == EstadoTarea.CITA_CONFIRMADA || nuevoEstado == EstadoTarea.ENVIADA;
             case CITA_CONFIRMADA:
-                return nuevoEstado == EstadoTarea.COMPLETADA || nuevoEstado == EstadoTarea.ENVIADA;
-            case COMPLETADA:
                 return nuevoEstado == EstadoTarea.ENVIADA;
             case ENVIADA:
-                return false; // Una vez ENVIADA, no se puede cambiar más el estado (final)
+                return nuevoEstado == EstadoTarea.COMPLETADA;
+            case COMPLETADA:
+                return false;
             default:
                 return false;
         }

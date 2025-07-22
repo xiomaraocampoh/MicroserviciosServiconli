@@ -40,6 +40,7 @@ MicroserviciosServiconli/
 └── apigateway/             # API Gateway
     ├── src/main/java/
     └── pom.xml
+
 📝 Endpoints de la API
 Todas las peticiones deben realizarse a través del API Gateway (http://localhost:8080).
 

@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tareas")
@@ -73,6 +75,8 @@ public class Tarea {
     @Column(length = 10)
     private String hora; // Recomendado: usar LocalTime si es solo hora de la cita
 
+    @OneToMany(mappedBy = "tarea", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HistorialTarea> historial = new ArrayList<>();
 
 
     @PrePersist
