@@ -15,17 +15,7 @@ spring:
           predicates:
             - Path=/auth/**
 
-    # SERVICIO DE REPORTES (PROTEGIDA) ---
-        - id: report_service_route
-          uri: lb://report-service   # Apunta al nombre de la aplicación
-          predicates:
-              - Path=/api/v1/reportes/** # Enruta las peticiones a este path
-          filters:
-            - name: AuthenticationFilter
-
-
-
-              # Ruta para el servicio de tareas (protegida)
+     # Ruta para el servicio de tareas (protegida)
         - id: task_service_route # Un ID único para esta ruta
           # CORREGIDO: Usando el service ID en lugar de una URL fija
           uri: http://localhost:8082
