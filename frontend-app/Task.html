@@ -5,26 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Serviconli - Gestión de Tareas Médicas</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; }
-    .modal.hidden { display: none; }
-    .modal-content {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 500px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .modal-content input, .modal-content textarea, .modal-content select {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .form-buttons { display: flex; gap: 10px; justify-content: flex-end; }
-  </style>
 </head>
 <body>
 <div class="header">
@@ -74,7 +54,7 @@
   </div>
   <div class="action-buttons">
     <button class="btn btn-primary" onclick="showCreateForm()">➕ Nueva tarea</button>
-    <button onclick="generateReport()">📥 Generar Reporte CSV</button>
+    <button class="btn btn-secondary" onclick="generarReporte(event)">📥 Generar Reporte</button>
     <button class="btn btn-secondary" onclick="logout()">🔒 Cerrar sesión</button>
   </div>
 </div>
@@ -98,6 +78,14 @@
         <option value="MEDIA">Media</option>
         <option value="ALTA">Alta</option>
         <option value="URGENTE">Urgente</option>
+      </select>
+      <select id="estadoForm" required>
+        <option value="">Estado</option>
+        <option value="PENDIENTE">Pendiente</option>
+        <option value="EN_PROGRESO">En Progreso</option>
+        <option value="CITA_CONFIRMADA">Cita Confirmada</option>
+        <option value="COMPLETADA">Completada</option>
+        <option value="ENVIADA">Enviada</option>
       </select>
       <input type="text" id="doctor" placeholder="Doctor" />
       <input type="text" id="ubicacion" placeholder="Ubicación" />
@@ -147,43 +135,44 @@
   function renderTasks() {
     const kanban = document.getElementById("kanban");
     kanban.innerHTML = "";
+    const tasksToRender = getFilteredTasks();
 
     statusOrder.forEach(status => {
       const col = document.createElement("div");
       col.className = "kanban-column";
       col.dataset.status = status;
 
-      const tasksFiltered = getFilteredTasks().filter(t => t.estado === status);
+      const tasksInColumn = tasksToRender.filter(t => t.estado === status);
 
       col.innerHTML = `
         <div class="column-header">
           <div class="column-title">
             ${getStatusLabel(status)}
-            <span class="column-count" id="count-${status}">${tasksFiltered.length}</span>
+            <span class="column-count">${tasksInColumn.length}</span>
           </div>
         </div>
         <div class="column-content" id="column-${status}">
-          ${tasksFiltered.length === 0 ? `<div class="empty-state">No hay tareas en esta columna</div>` : ""}
+          ${tasksInColumn.length === 0 ? `<div class="empty-state">No hay tareas en esta columna</div>` : ""}
         </div>
       `;
       kanban.appendChild(col);
 
       const content = col.querySelector(".column-content");
-      tasksFiltered.forEach(task => {
+      tasksInColumn.forEach(task => {
         content.appendChild(createTaskCard(task));
       });
     });
   }
 
   function getStatusLabel(status) {
-    switch (status) {
-      case "PENDIENTE": return "📋 Pendientes";
-      case "EN_PROGRESO": return "⏳ En Progreso";
-      case "CITA_CONFIRMADA": return "✅ Cita Confirmada";
-      case "COMPLETADA": return "📤 Completadas";
-      case "ENVIADA": return "📨 Enviadas";
-      default: return status;
-    }
+    const labels = {
+      "PENDIENTE": "📋 Pendientes",
+      "EN_PROGRESO": "⏳ En Progreso",
+      "CITA_CONFIRMADA": "✅ Cita Confirmada",
+      "COMPLETADA": "📤 Completadas",
+      "ENVIADA": "📨 Enviadas"
+    };
+    return labels[status] || status;
   }
 
   function getFilteredTasks() {
@@ -192,19 +181,25 @@
     const fPriority = document.getElementById("filterPriority").value;
     return tasks.filter(t =>
             (!fStatus || t.estado === fStatus) &&
-            (!fType || t.tipo === fType) &&
+            (!fType || t.tipo.toLowerCase() === fType.toLowerCase()) &&
             (!fPriority || t.prioridad === fPriority)
     );
   }
 
   function createTaskCard(t) {
     const card = document.createElement("div");
+    // SOLUCIÓN: Usamos la clase 'task-card' que coincide con tu CSS.
     card.className = "task-card";
+    card.dataset.id = t.id; // Guardamos el ID para futuras acciones
+
     card.innerHTML = `
       <h4>${t.tipo}</h4>
-      <p>👤 ${t.paciente} | ☎ ${t.telefono || "-"}</p>
-      <p>🏥 ${t.eps || "-"} | 👨‍⚕️ ${t.doctor || "-"}</p>
-      <p>📍 ${t.ubicacion || "-"} | 📅 ${t.fecha || ""} ${t.hora || ""}</p>
+      <p>👤 <strong>${t.paciente}</strong></p>
+      <p>📞 ${t.telefono || "N/A"}</p>
+      <p>🏥 ${t.eps || "N/A"}</p>
+      <p>👨‍⚕️ ${t.doctor || "N/A"}</p>
+      <p>📍 ${t.ubicacion || "N/A"}</p>
+      <p>📅 ${t.fecha || ""} ${t.hora || ""}</p>
       <p>📝 ${t.observaciones || ""}</p>
       <div class="task-actions">
         <button onclick="sendWhatsApp(${t.id})">📲</button>
@@ -222,16 +217,16 @@
     if (currentIndex < statusOrder.length - 1) {
       const nuevoEstado = statusOrder[currentIndex + 1];
       try {
-        const res = await fetch(`${API_URL}/${id}/estado/${nuevoEstado}`, {
+        const res = await fetch(`${API_URL}/${id}/estado`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
-          }
+          },
+          body: JSON.stringify({ estado: nuevoEstado })
         });
         if (!res.ok) throw new Error("No se pudo actualizar");
-        task.estado = nuevoEstado;
-        renderTasks();
+        await fetchTasks(); // Recargar todo para consistencia
         showNotification("Estado actualizado");
       } catch (e) {
         showNotification("Error al actualizar estado", "error");
@@ -269,6 +264,7 @@
     document.getElementById("telefono").value = task?.telefono || "";
     document.getElementById("eps").value = task?.eps || "";
     document.getElementById("prioridad").value = task?.prioridad || "";
+    document.getElementById("estadoForm").value = task?.estado || "PENDIENTE";
     document.getElementById("doctor").value = task?.doctor || "";
     document.getElementById("ubicacion").value = task?.ubicacion || "";
     document.getElementById("fecha").value = task?.fecha || "";
@@ -291,6 +287,7 @@
       telefono: document.getElementById("telefono").value,
       eps: document.getElementById("eps").value,
       prioridad: document.getElementById("prioridad").value,
+      estado: document.getElementById("estadoForm").value,
       doctor: document.getElementById("doctor").value,
       ubicacion: document.getElementById("ubicacion").value,
       fecha: document.getElementById("fecha").value,
@@ -327,7 +324,6 @@
   }
 
   async function deleteTask(id) {
-    console.log("Eliminando tarea ID:", id);
     if (!confirm("¿Estás seguro de eliminar esta tarea?")) return;
     try {
       const res = await fetch(`${API_URL}/${id}`, {
@@ -335,38 +331,95 @@
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Error al eliminar");
-      showNotification("Tarea eliminada");
       await fetchTasks();
+      showNotification("Tarea eliminada");
     } catch (e) {
       showNotification("No se pudo eliminar", "error");
       console.error(e);
     }
   }
 
-  function generateReport() {
-    const filteredTasks = getFilteredTasks();
+  document.getElementById("filterStatus").addEventListener("change", renderTasks);
+  document.getElementById("filterType").addEventListener("change", renderTasks);
+  document.getElementById("filterPriority").addEventListener("change", renderTasks);
 
-    if (filteredTasks.length === 0) {
-      showNotification('No hay tareas para generar el reporte', 'error');
+  window.onload = fetchTasks;
+
+  // --- FUNCIÓN DE REPORTE CORREGIDA Y MEJORADA ---
+  async function generarReporte(event) {
+    console.log("Iniciando la generación del reporte...");
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert("Error de autenticación. Por favor, inicie sesión de nuevo.");
       return;
     }
 
-    // Crear resumen de estados
-    const estados = ['pendiente', 'progreso', 'confirmada', 'enviada', 'completada'];
-    const resumen = estados.map(estado => {
-      const count = filteredTasks.filter(task => task.status === estado).length;
-      return [`${estado.toUpperCase()}`, count];
-    });
+    // MEJORA: Usamos las tareas ya filtradas por la UI.
+    const tareasParaReporte = getFilteredTasks();
 
-    const estadoMayoritario = resumen.reduce((a, b) => a[1] > b[1] ? a : b)[0];
+    if (tareasParaReporte.length === 0) {
+      alert("No hay tareas (que coincidan con los filtros) para incluir en el reporte.");
+      return;
+    }
 
+    console.log(`Se enviarán ${tareasParaReporte.length} tareas al reporte.`);
 
-    document.getElementById("filterStatus").addEventListener("change", renderTasks);
-    document.getElementById("filterType").addEventListener("change", renderTasks);
-    document.getElementById("filterPriority").addEventListener("change", renderTasks);
+    // Mapeamos los datos directamente del objeto, es más seguro.
+    const payload = tareasParaReporte.map(t => ({
+      id: t.id,
+      tipo: t.tipo,
+      paciente: t.paciente,
+      eps: t.eps,
+      prioridad: t.prioridad,
+      estado: t.estado,
+      observaciones: t.observaciones,
+      fechaCreacion: t.fechaCreacion, // Asegúrate que el backend envíe este campo
+      fechaRecordatorio: t.fechaRecordatorio, // Y este también
+      asignadoA: t.asignadoA // Y este
+    }));
 
-    window.onload = fetchTasks;
+    const botonReporte = event.target.closest('button');
+    const textoOriginalBoton = botonReporte.innerHTML;
+    botonReporte.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...';
+    botonReporte.disabled = true;
 
+    try {
+      const response = await fetch('/api/v1/reportes/excel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Error desconocido del servidor." }));
+        throw new Error(`Error ${response.status}: ${errorData.message}`);
+      }
+
+      const header = response.headers.get('Content-Disposition');
+      const nombreArchivo = header ? header.split('filename=')[1].replace(/"/g, '') : `Reporte_Tareas_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+    } catch (error) {
+      console.error('Error al generar el reporte:', error);
+      alert(`No se pudo generar el reporte: ${error.message}`);
+    } finally {
+      botonReporte.innerHTML = textoOriginalBoton;
+      botonReporte.disabled = false;
+    }
   }
 </script>
 </body>
