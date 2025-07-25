@@ -1,4 +1,4 @@
-server:
+server:server:
   port: 8080
 
 jwt:
@@ -10,29 +10,36 @@ spring:
       default-filters:
         - PreserveHostHeader
       routes:
+        # Auth service (login/registro)
         - id: auth-service
           uri: http://localhost:8081
           predicates:
             - Path=/auth/**
 
-     # Ruta para el servicio de tareas (protegida)
-        - id: task_service_route # Un ID único para esta ruta
-          # CORREGIDO: Usando el service ID en lugar de una URL fija
+        # Task service: tareas
+        - id: task-service-tareas
           uri: http://localhost:8082
           predicates:
             - Path=/api/v1/tareas/**
-          # ¡AÑADIDO! Aplicando el filtro de seguridad a esta ruta
           filters:
-            - name: AuthenticationFilter # Todas las peticiones que empiecen con /api/v1/tareas/
+            - name: AuthenticationFilter
+
+        # Task service: pacientes (cotizantes y beneficiarios)
+        - id: task-service-pacientes
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/pacientes/**
+          filters:
+            - name: AuthenticationFilter
 
   webflux:
     cors:
       filter:
         corsConfigurations:
-          '[/**]': # Aplica la configuración a todas las rutas (/**)
+          '[/**]':
             allowedOrigins:
-              - "http://localhost:5500" # Permite solicitudes desde tu frontend (ej. Live Server de VS Code)
-              - "http://127.0.0.1:5500" # A veces, el navegador usa 127.0.0.1 en lugar de localhost
+              - "http://localhost:5500"
+              - "http://127.0.0.1:5500"
             allowedMethods:
               - GET
               - POST
@@ -40,6 +47,6 @@ spring:
               - PATCH
               - DELETE
             allowedHeaders:
-              - "*" # Permite todos los headers
-            allowCredentials: true # Permite el envío de credenciales (cookies, headers de autorización)
-            maxAge: 3600 # Cachea los resultados de la pre-verificación de CORS por 1 hora
+              - "*"
+            allowCredentials: true
+            maxAge: 3600
