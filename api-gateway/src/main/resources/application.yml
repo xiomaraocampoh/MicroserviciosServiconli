@@ -20,7 +20,7 @@ spring:
           # CORREGIDO: Usando el service ID en lugar de una URL fija
           uri: http://localhost:8082
           predicates:
-            - Path=/api/v1/tareas/**
+            - Path=/api/v1/tareas/**  /api/v1/pacientes/**
           # ¡AÑADIDO! Aplicando el filtro de seguridad a esta ruta
           filters:
             - name: AuthenticationFilter # Todas las peticiones que empiecen con /api/v1/tareas/
