@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +60,6 @@ public class Tarea {
 
     private LocalDateTime fechaRecordatorio; // Opcional, para recordatorios futuros
 
-
     @Column(length = 100)
     private String telefono;
 
@@ -74,6 +74,39 @@ public class Tarea {
 
     @Column(length = 10)
     private String hora; // Recomendado: usar LocalTime si es solo hora de la cita
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TipoPaciente tipoPaciente; // COTIZANTE o BENEFICIARIO
+
+    @Column(length = 50)
+    private String tipoIdentificacionPaciente;
+
+    @Column(length = 250)
+    private String numeroIdentificacionPaciente;
+
+    private LocalDate fechaExpedicion;
+
+    @Column(length = 20)
+    private String celularPaciente;
+
+    @Column(length = 100)
+    private String parentezco; // solo si es beneficiario
+
+    @Column(length = 250)
+    private String nombreCotizante; // solo si es beneficiario
+
+    @Column(length = 250)
+    private String numeroIdentificacionCotizante;
+
+    @Column(length = 100)
+    private String numeroAutorizacion;
+
+    @Column(length = 100)
+    private String numeroRadicado;
+
+    @Column(length = 500)
+    private String especificaciones;
 
     @OneToMany(mappedBy = "tarea", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HistorialTarea> historial = new ArrayList<>();

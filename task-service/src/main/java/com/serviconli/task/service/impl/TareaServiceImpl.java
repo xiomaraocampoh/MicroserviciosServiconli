@@ -9,6 +9,7 @@ import com.serviconli.task.exception.InvalidTaskStateException;
 import com.serviconli.task.model.EstadoTarea;
 import com.serviconli.task.model.HistorialTarea;
 import com.serviconli.task.model.Prioridad;
+import com.serviconli.task.model.TipoPaciente;
 import com.serviconli.task.model.Tarea;
 import com.serviconli.task.repository.HistorialTareaRepository;
 import com.serviconli.task.repository.TareaRepository;
@@ -36,33 +37,37 @@ public class TareaServiceImpl implements TareaService {
 
     @Override
     @Transactional
-    public TareaResponseDTO crearTarea(TareaRequestDTO tareaRequestDTO) {
+    public TareaResponseDTO crearTarea(TareaRequestDTO dto) {
         Tarea tarea = new Tarea();
-        BeanUtils.copyProperties(tareaRequestDTO, tarea);
+        BeanUtils.copyProperties(dto, tarea);
 
-        tarea.setEstado(EstadoTarea.PENDIENTE); // Estado inicial
+        tarea.setEstado(EstadoTarea.PENDIENTE);
         tarea.setFechaCreacion(LocalDateTime.now());
         tarea.setFechaActualizacion(LocalDateTime.now());
 
-        // Nuevos campos
-        tarea.setTelefono(tareaRequestDTO.getTelefono());
-        tarea.setDoctor(tareaRequestDTO.getDoctor());
-        tarea.setUbicacion(tareaRequestDTO.getUbicacion());
-        tarea.setFecha(tareaRequestDTO.getFecha());
-        tarea.setHora(tareaRequestDTO.getHora());
+        // 🧠 Lógica automática para fecha_recordatorio
+        if (dto.getFecha() != null && dto.getHora() != null) {
+            try {
+                LocalDateTime fechaCita = LocalDateTime.parse(dto.getFecha() + "T" + dto.getHora());
+                tarea.setFechaRecordatorio(fechaCita.minusDays(1));
+            } catch (Exception e) {
+                tarea.setFechaRecordatorio(null);
+            }
+        }
 
-        Tarea savedTarea = tareaRepository.save(tarea);
+        Tarea saved = tareaRepository.save(tarea);
 
-        // Historial inicial
+        // Guardar historial inicial
         HistorialTarea historial = new HistorialTarea();
-        historial.setTarea(savedTarea);
+        historial.setTarea(saved);
         historial.setEstadoAnterior(null);
         historial.setEstadoNuevo(EstadoTarea.PENDIENTE);
-        historial.setDescripcionCambio("Tarea creada con estado PENDIENTE");
+        historial.setDescripcionCambio("Tarea creada");
         historialTareaRepository.save(historial);
 
-        return convertToDto(savedTarea);
+        return convertToDto(saved);
     }
+
 
 
     @Override
@@ -81,38 +86,46 @@ public class TareaServiceImpl implements TareaService {
 
     @Override
     @Transactional
-    public TareaResponseDTO actualizarTarea(Long id, TareaUpdateDTO tareaUpdateDTO) {
-        Tarea tareaExistente = tareaRepository.findById(id)
+    public TareaResponseDTO actualizarTarea(Long id, TareaUpdateDTO dto) {
+        Tarea tarea = tareaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
 
-        // Campos existentes
-        if (tareaUpdateDTO.getTipo() != null) tareaExistente.setTipo(tareaUpdateDTO.getTipo());
-        if (tareaUpdateDTO.getPaciente() != null) tareaExistente.setPaciente(tareaUpdateDTO.getPaciente());
-        if (tareaUpdateDTO.getEps() != null) tareaExistente.setEps(tareaUpdateDTO.getEps());
-        if (tareaUpdateDTO.getPrioridad() != null) tareaExistente.setPrioridad(tareaUpdateDTO.getPrioridad());
-        if (tareaUpdateDTO.getObservaciones() != null)
-            tareaExistente.setObservaciones(tareaUpdateDTO.getObservaciones());
-        if (tareaUpdateDTO.getFechaRecordatorio() != null)
-            tareaExistente.setFechaRecordatorio(tareaUpdateDTO.getFechaRecordatorio());
+        // Copia solo los campos no nulos
+        if (dto.getTipo() != null) tarea.setTipo(dto.getTipo());
+        if (dto.getPaciente() != null) tarea.setPaciente(dto.getPaciente());
+        if (dto.getEps() != null) tarea.setEps(dto.getEps());
+        if (dto.getPrioridad() != null) tarea.setPrioridad(dto.getPrioridad());
+        if (dto.getObservaciones() != null) tarea.setObservaciones(dto.getObservaciones());
+        if (dto.getFechaRecordatorio() != null) tarea.setFechaRecordatorio(dto.getFechaRecordatorio());
+        if (dto.getTelefono() != null) tarea.setTelefono(dto.getTelefono());
+        if (dto.getDoctor() != null) tarea.setDoctor(dto.getDoctor());
+        if (dto.getUbicacion() != null) tarea.setUbicacion(dto.getUbicacion());
+        if (dto.getFecha() != null) tarea.setFecha(dto.getFecha());
+        if (dto.getHora() != null) tarea.setHora(dto.getHora());
 
         // Nuevos campos
-        if (tareaUpdateDTO.getTelefono() != null) tareaExistente.setTelefono(tareaUpdateDTO.getTelefono());
-        if (tareaUpdateDTO.getDoctor() != null) tareaExistente.setDoctor(tareaUpdateDTO.getDoctor());
-        if (tareaUpdateDTO.getUbicacion() != null) tareaExistente.setUbicacion(tareaUpdateDTO.getUbicacion());
-        if (tareaUpdateDTO.getFecha() != null) tareaExistente.setFecha(tareaUpdateDTO.getFecha());
-        if (tareaUpdateDTO.getHora() != null) tareaExistente.setHora(tareaUpdateDTO.getHora());
+        if (dto.getTipoPaciente() != null) tarea.setTipoPaciente(dto.getTipoPaciente());
+        if (dto.getTipoIdentificacionPaciente() != null) tarea.setTipoIdentificacionPaciente(dto.getTipoIdentificacionPaciente());
+        if (dto.getNumeroIdentificacionPaciente() != null) tarea.setNumeroIdentificacionPaciente(dto.getNumeroIdentificacionPaciente());
+        if (dto.getFechaExpedicion() != null) tarea.setFechaExpedicion(dto.getFechaExpedicion());
+        if (dto.getCelularPaciente() != null) tarea.setCelularPaciente(dto.getCelularPaciente());
+        if (dto.getParentezco() != null) tarea.setParentezco(dto.getParentezco());
+        if (dto.getNombreCotizante() != null) tarea.setNombreCotizante(dto.getNombreCotizante());
+        if (dto.getNumeroIdentificacionCotizante() != null) tarea.setNumeroIdentificacionCotizante(dto.getNumeroIdentificacionCotizante());
+        if (dto.getNumeroAutorizacion() != null) tarea.setNumeroAutorizacion(dto.getNumeroAutorizacion());
+        if (dto.getNumeroRadicado() != null) tarea.setNumeroRadicado(dto.getNumeroRadicado());
+        if (dto.getEspecificaciones() != null) tarea.setEspecificaciones(dto.getEspecificaciones());
 
-        // Cambiar estado si viene en la petición
-        if (tareaUpdateDTO.getEstado() != null && !tareaUpdateDTO.getEstado().equals(tareaExistente.getEstado())) {
-            EstadoTarea estadoAnterior = tareaExistente.getEstado();
-            tareaExistente.setEstado(tareaUpdateDTO.getEstado());
-            registrarHistorialCambioEstado(tareaExistente, estadoAnterior, tareaUpdateDTO.getEstado(), "Actualización directa de estado");
+        // Validar cambio de estado
+        if (dto.getEstado() != null && !dto.getEstado().equals(tarea.getEstado())) {
+            EstadoTarea anterior = tarea.getEstado();
+            tarea.setEstado(dto.getEstado());
+            registrarHistorialCambioEstado(tarea, anterior, dto.getEstado(), "Cambio manual de estado");
         }
 
-        tareaExistente.setFechaActualizacion(LocalDateTime.now());
+        tarea.setFechaActualizacion(LocalDateTime.now());
 
-        Tarea updatedTarea = tareaRepository.save(tareaExistente);
-        return convertToDto(updatedTarea);
+        return convertToDto(tareaRepository.save(tarea));
     }
 
 

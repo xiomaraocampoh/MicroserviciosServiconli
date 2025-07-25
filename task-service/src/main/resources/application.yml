@@ -4,28 +4,37 @@ spring:
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
-      ddl-auto: update # 'update' creará/actualizará tablas automáticamente. ¡Cuidado en producción!
-    show-sql: true # Muestra las sentencias SQL en la consola. Útil para depuración.
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true # Formatea el SQL para una mejor legibilidad.
-        dialect: org.hibernate.dialect.MySQL8Dialect # Dialecto de Hibernate para MySQL 8.x
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
   application:
     name: task-service
 
+# Segunda base de datos: serviconli2025
+serviconli:
+  datasource:
+    url: jdbc:mysql://localhost:3306/serviconli2025?useSSL=false&serverTimezone=UTC
+    username: root
+    password:
+
 server:
-  port: 8082 # Puerto en el que se ejecutará el microservicio task-service
+  port: 8082
 
 logging:
   level:
     org:
       hibernate:
-        SQL: DEBUG # Muestra las sentencias SQL ejecutadas
+        SQL: DEBUG
         type:
           descriptor:
             sql:
-              BasicBinder: TRACE # Muestra los parámetros de las sentencias SQL
+              BasicBinder: TRACE
     com:
-      serviconli: DEBUG # Nivel de log para nuestros paquetes
+      serviconli: DEBUG
