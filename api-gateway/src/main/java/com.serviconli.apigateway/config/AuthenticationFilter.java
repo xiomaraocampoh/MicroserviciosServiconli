@@ -13,6 +13,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.security.Key;
+import java.util.List;
 
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
@@ -24,11 +25,18 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         super(Config.class);
     }
 
+    private static final List<String> PUBLIC_ROUTES = List.of(
+            "/auth/register",
+            "/auth/login"
+    );
+
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            // Excluir endpoints de autenticación
-            if (exchange.getRequest().getURI().getPath().contains("/auth")) {
+            String path = exchange.getRequest().getURI().getPath();
+
+            // Excluir rutas públicas
+            if (PUBLIC_ROUTES.stream().anyMatch(path::startsWith)) {
                 return chain.filter(exchange);
             }
 

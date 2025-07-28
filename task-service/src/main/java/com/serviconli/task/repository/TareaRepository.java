@@ -23,5 +23,4 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     List<Tarea> findByEstadoAndPrioridad(EstadoTarea estado, Prioridad prioridad);
     List<Tarea> findByEstadoAndTipo(EstadoTarea estado, String tipo);
 
-    // Puedes agregar más métodos según sea necesario para filtros específicos
 }
