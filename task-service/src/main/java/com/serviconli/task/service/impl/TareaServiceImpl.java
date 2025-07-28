@@ -135,8 +135,6 @@ public class TareaServiceImpl implements TareaService {
         if (!tareaRepository.existsById(id)) {
             throw new ResourceNotFoundException("Tarea no encontrada con ID: " + id);
         }
-        // Opcional: Eliminar historial asociado si se configura en cascada, o si se maneja manualmente.
-        // historialTareaRepository.deleteByTareaId(id); // Necesitaría un método en el repositorio de historial
         tareaRepository.deleteById(id);
     }
 

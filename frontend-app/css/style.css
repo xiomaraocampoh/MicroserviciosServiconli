@@ -435,3 +435,58 @@ body {
         justify-content: center;
     }
 }
+
+/* Estilos para el grupo de entrada con botón de búsqueda */
+.input-group {
+    display: flex;
+    width: 100%;
+}
+
+.input-group .form-input {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn-search {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 0.75rem 1rem; /* Ajusta el padding para que coincida con el input */
+    font-size: 1rem; /* Asegura que el texto del botón se vea bien */
+}
+
+/* Estilos para los títulos de las secciones dentro del modal */
+.modal-content h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: #00b894; /* Color verde de tu tema Serviconli */
+    border-bottom: 1px solid #e0e6ed;
+    padding-bottom: 0.5rem;
+}
+
+/* Ajustes para los botones de acción en la tarjeta de tarea */
+.task-actions button {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem; /* Asegura que los iconos se vean bien */
+    line-height: 1; /* Alinea los iconos verticalmente */
+}
+
+.task-actions button:hover {
+    background: #e5e7eb;
+}
+
+/* Estilos específicos para los botones de WhatsApp y Recordatorio si deseas colores */
+.task-actions button:nth-child(1) { /* Botón de WhatsApp */
+    color: #25d366; /* Verde WhatsApp */
+    border-color: #25d366;
+}
+
+.task-actions button:nth-child(2) { /* Botón de Recordatorio (campanita) */
+    color: #ffc107; /* Amarillo para recordatorio */
+    border-color: #ffc107;
+}

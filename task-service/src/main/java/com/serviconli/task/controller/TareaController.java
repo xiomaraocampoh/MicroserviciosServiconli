@@ -91,7 +91,6 @@ public class TareaController {
     }
 
     // --- Manejo de Excepciones Global (para este controlador) ---
-    // Se puede mover a un @ControllerAdvice global si se desea
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException ex) {
@@ -102,17 +101,4 @@ public class TareaController {
     public ResponseEntity<String> handleInvalidTaskStateException(InvalidTaskStateException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
-
-    // Puedes añadir más @ExceptionHandler para otras validaciones o excepciones generales
-    // Por ejemplo, para manejar Validations, podrías añadir:
-    // @ExceptionHandler(MethodArgumentNotValidException.class)
-    // public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    //     Map<String, String> errors = new HashMap<>();
-    //     ex.getBindingResult().getAllErrors().forEach((error) -> {
-    //         String fieldName = ((FieldError) error).getField();
-    //         String errorMessage = error.getDefaultMessage();
-    //         errors.put(fieldName, errorMessage);
-    //     });
-    //     return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-    // }
 }
