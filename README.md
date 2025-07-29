@@ -41,37 +41,45 @@ MicroserviciosServiconli/
     ├── src/main/java/
     └── pom.xml
 
-📝 Endpoints de la API
+📝 Endpoints de la API ( para probar en postman)
+
+headers necesarios: 
+Authorization: Bearer <token_obtenido_en_login>
+Content-Type: application/json
+
 Todas las peticiones deben realizarse a través del API Gateway (http://localhost:8080).
 
-Authentication Service
+Authentication Service:
 
-POST /auth/register: Registra un nuevo usuario.
+| Método | Endpoint    | Descripción             | Body/Params              |
+| ------ | ----------- | ----------------------- | ------------------------ |
+| POST   | `/register` | Registrar nuevo usuario | `{ username, password }` |
+| POST   | `/login`    | Obtener token JWT       | `{ username, password }` |
 
-POST /auth/login: Autentica a un usuario y devuelve un token JWT.
 
 
 Task Service (Rutas protegidas)
 
-POST /api/v1/tareas: Crea una nueva tarea.
+| Método | Endpoint                     | Descripción                                      |
+| ------ | ---------------------------- | ------------------------------------------------ |
+| GET    | `/`                          | Obtener todas las tareas                         |
+| GET    | `/{id}`                      | Obtener una tarea por ID                         |
+| POST   | `/`                          | Crear una nueva tarea (cotizante o beneficiario) |
+| PUT    | `/{id}`                      | Actualizar una tarea                             |
+| DELETE | `/{id}`                      | Eliminar una tarea                               |
+| PATCH  | `/{id}/estado/{nuevoEstado}` | Cambiar estado de la tarea (progresivamente)     |
 
 
-GET /api/v1/tareas/{id}: Obtiene una tarea por su ID.
+Task Service (pacientes / cotizantes)
 
+| Método | Endpoint                           | Descripción                          |
+| ------ | ---------------------------------- | ------------------------------------ |
+| GET    | `/cotizantes`                      | Obtener todos los cotizantes         |
+| GET    | `/cotizantes/{id}`                 | Obtener cotizante por ID o documento |
+| GET    | `/cotizantes/search?name={nombre}` | Buscar cotizantes por nombre         |
 
-GET /api/v1/tareas: Obtiene una lista de todas las tareas.
-
-
-PUT /api/v1/tareas/{id}: Actualiza una tarea existente.
-
-
-DELETE /api/v1/tareas/{id}: Elimina una tarea.
-
-
-PATCH /api/v1/tareas/{id}/estado/{nuevoEstado}: Cambia el estado de una tarea.
-
-
-GET /api/v1/tareas/filtrar: Filtra tareas por estado, prioridad, tipo, etc.
-
-
-GET /api/v1/tareas/{tareaId}/historial: Obtiene el historial de cambios de una tarea.
+| Método | Endpoint                              | Descripción                             |
+| ------ | ------------------------------------- | --------------------------------------- |
+| GET    | `/beneficiarios`                      | Obtener todos los beneficiarios         |
+| GET    | `/beneficiarios/{id}`                 | Obtener beneficiario por ID o documento |
+| GET    | `/beneficiarios/search?name={nombre}` | Buscar beneficiarios por nombre         |
