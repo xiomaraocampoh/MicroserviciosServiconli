@@ -53,10 +53,15 @@ Authentication Service:
 
 | Método | Endpoint                              | Descripción             | Body/Params              |
 | ------ |---------------------------------------| ----------------------- | ------------------------ |
-| POST   | `http://localhost:8080/auth/register` | Registrar nuevo usuario | `{ username, password }` |
-| POST   | `http://localhost:8080/auth/login`    | Obtener token JWT       | `{ username, password }` |
+| POST   | `http://localhost:8080/auth/register` | Registrar nuevo usuario | `{ email, password }` |
+| POST   | `http://localhost:8080/auth/login`    | Obtener token JWT       | `{ email, password }` |
 
-
+ejemplo registras: 
+{
+  "email": "ejemplo@gruposerviconli.com",
+  "password": "1234567"
+}
+ debe si o si tener un dominio @gruposerviconli.com
 
 Task Service (Rutas protegidas)
 
