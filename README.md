@@ -51,21 +51,21 @@ Todas las peticiones deben realizarse a través del API Gateway (http://localhos
 
 Authentication Service:
 
-| Método | Endpoint    | Descripción             | Body/Params              |
-| ------ | ----------- | ----------------------- | ------------------------ |
-| POST   | `/register` | Registrar nuevo usuario | `{ username, password }` |
-| POST   | `/login`    | Obtener token JWT       | `{ username, password }` |
+| Método | Endpoint                              | Descripción             | Body/Params              |
+| ------ |---------------------------------------| ----------------------- | ------------------------ |
+| POST   | `http://localhost:8080/auth/register` | Registrar nuevo usuario | `{ username, password }` |
+| POST   | `http://localhost:8080/auth/login`    | Obtener token JWT       | `{ username, password }` |
 
 
 
 Task Service (Rutas protegidas)
 
-| Método | Endpoint                     | Descripción                                      |
-| ------ | ---------------------------- | ------------------------------------------------ |
-| GET    | `http://localhost:8080/api/v1/tareas`                          | Obtener todas las tareas                         |
-| GET    | `http://localhost:8080/api/v1/tareas/{id}`                      | Obtener una tarea por ID                         |
-| POST   | `http://localhost:8080/api/v1/tareas`                          | Crear una nueva tarea (cotizante o beneficiario) |
-| DELETE | `http://localhost:8080/api/v1/tareas/{id}`                      | Eliminar una tarea                               |
+| Método | Endpoint                                                   | Descripción                                      |
+| ------ |------------------------------------------------------------| ------------------------------------------------ |
+| GET    | `http://localhost:8080/api/v1/tareas`                      | Obtener todas las tareas                         |
+| GET    | `http://localhost:8080/api/v1/tareas/{id}`                 | Obtener una tarea por ID                         |
+| POST   | `http://localhost:8080/api/v1/tareas`                      | Crear una nueva tarea (cotizante o beneficiario) |
+| DELETE | `http://localhost:8080/api/v1/tareas/{id}`                 | Eliminar una tarea                               |
 | PATCH  | `http://localhost:8080/api/v1/tareas/3/estado/EN_PROGRESO` | Cambiar estado de la tarea (progresivamente)     |
 
 
@@ -98,12 +98,12 @@ ejemplo body crear tarea:
 
 Task Service (pacientes / cotizantes)
 
-| Método | Endpoint                                          | Descripción                          |
-|--------|---------------------------------------------------|--------------------------------------|
-| POST   | http://localhost:8080/api/v1/pacientes/cotizante  | crea cotizante                       |
-| GET    |`http://localhost:8080/api/v1/pacientes/cotizantes`| Obtener todos los cotizantes         |
-| GET    |`http://localhost:8080/api/v1/pacientes/cotizantes/{id}` | Obtener cotizante por ID o documento |
-| GET    | `http://localhost:8080/api/v1/pacientes/cotizantescotizante?name={nombre}`| Buscar cotizantes por nombre         |
+| Método | Endpoint                                                                   | Descripción                          |
+|--------|----------------------------------------------------------------------------|--------------------------------------|
+| POST   | http://localhost:8080/api/v1/pacientes/cotizante                           | crea cotizante                       |
+| GET    | `http://localhost:8080/api/v1/pacientes/cotizantes`                        | Obtener todos los cotizantes         |
+| GET    | `http://localhost:8080/api/v1/pacientes/cotizantes/{id}`                   | Obtener cotizante por ID o documento |
+| GET    | `http://localhost:8080/api/v1/pacientes/cotizantescotizante?name={nombre}` | Buscar cotizantes por nombre         |
 
 ejemplo crear cotizante: 
 
