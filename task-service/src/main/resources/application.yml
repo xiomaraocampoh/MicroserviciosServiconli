@@ -20,7 +20,7 @@ spring:
 # Segunda base de datos: serviconli2025
 serviconli:
   datasource:
-    url: jdbc:mysql://localhost:3306/serviconli2025?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/serviconli2025?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
     username: root
     password:
 
