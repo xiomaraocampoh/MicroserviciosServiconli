@@ -1,0 +1,92 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f7f9fb;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #01c38d;
+    color: white;
+    padding: 10px 20px;
+}
+
+.btn {
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+}
+
+.kanban-board {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    overflow-x: auto;
+}
+
+.kanban-column {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    min-width: 250px;
+}
+
+.kanban-card {
+    background: #f1f1f1;
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.kanban-card .actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-height: 80%;
+    overflow-y: auto;
+}
+
+.close {
+    float: right;
+    cursor: pointer;
+}

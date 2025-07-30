@@ -6,34 +6,34 @@
   <title>Serviconli - Gestión de Tareas Médicas</title>
   <link rel="stylesheet" href="/frontend-app/css/style.css" />
   <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f7f9fb; }
+    .header { display: flex; justify-content: space-between; align-items: center; background: #01c38d; color: white; padding: 10px 20px; }
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 10px; }
+    .filters { display: flex; gap: 15px; }
+    .filter-group { display: flex; flex-direction: column; }
+    .kanban-board { display: flex; gap: 10px; padding: 10px; overflow-x: auto; }
+    .kanban-column { background: white; border-radius: 8px; padding: 10px; min-width: 250px; }
+    .task-card { background: #f1f1f1; padding: 8px; margin-bottom: 8px; border-radius: 6px; }
+    .task-actions { display: flex; justify-content: space-between; }
+    .btn { border: none; border-radius: 5px; padding: 6px 10px; cursor: pointer; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+    .notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 6px; color: white; display: none; }
+    .notification.show { display: block; }
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; }
     .modal.hidden { display: none; }
-    .modal-content {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      width: 90%;      max-width: 500px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .modal-content input, .modal-content textarea, .modal-content select {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .form-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-content { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 550px; max-height: 90%; overflow-y: auto; }
+    .form-group { display: flex; flex-direction: column; margin-bottom: 10px; }
+    .form-input { padding: 6px; border-radius: 5px; border: 1px solid #ccc; }
+    .form-buttons { display: flex; justify-content: flex-end; gap: 10px; }
   </style>
 </head>
 <body>
 <div class="header">
-  <div class="logo">
-    <div class="logo-icon"></div>
-    <div class="logo-text">serviconli</div>
-  </div>
-  <div class="user-info">
-    <span>Central de citas - Serviconli</span>
-    <div class="user-avatar">cc</div>
+  <div>Central de Citas - Serviconli</div>
+  <div>
+    <button class="btn btn-primary" onclick="showCreateForm()">➕ Nueva tarea</button>
+    <button class="btn btn-secondary" onclick="logout()">🔒 Cerrar sesión</button>
   </div>
 </div>
 
@@ -41,28 +41,28 @@
   <div class="filters">
     <div class="filter-group">
       <label>Estado</label>
-      <select class="filter-select" id="filterStatus">
+      <select id="filterStatus" class="form-input">
         <option value="">Todos</option>
-        <option value="PENDIENTE">Pendientes</option>
+        <option value="PENDIENTE">Pendiente</option>
         <option value="EN_PROGRESO">En Progreso</option>
         <option value="CITA_CONFIRMADA">Cita Confirmada</option>
-        <option value="COMPLETADA">Completadas</option>
-        <option value="ENVIADA">Enviadas</option>
+        <option value="ENVIADA">Enviada</option>
+        <option value="COMPLETADA">Completada</option>
       </select>
     </div>
     <div class="filter-group">
       <label>Tipo</label>
-      <select class="filter-select" id="filterType">
+      <select id="filterType" class="form-input">
         <option value="">Todos</option>
-        <option value="consulta">Consulta</option>
-        <option value="examen">Examen</option>
-        <option value="procedimiento">Procedimiento</option>
-        <option value="especialista">Especialista</option>
+        <option value="agendar especialista">Especialista</option>
+        <option value="agendar medicina general">Medicina General</option>
+        <option value="agendar laboratorio">Laboratorio</option>
+        <option value="agendar examen">Examen</option>
       </select>
     </div>
     <div class="filter-group">
       <label>Prioridad</label>
-      <select class="filter-select" id="filterPriority">
+      <select id="filterPriority" class="form-input">
         <option value="">Todas</option>
         <option value="ALTA">Alta</option>
         <option value="MEDIA">Media</option>
@@ -71,184 +71,86 @@
       </select>
     </div>
   </div>
-  <div class="action-buttons">
-    <button class="btn btn-primary" onclick="showCreateForm()">➕ Nueva tarea</button>
-    <button class="btn btn-secondary" onclick="">📥 Generar Reporte CSV</button>
-    <button class="btn btn-secondary" onclick="logout()">🔒 Cerrar sesión</button>
-  </div>
 </div>
 
 <div class="kanban-board" id="kanban"></div>
-
 <div class="notification" id="notification"></div>
 
+<!-- Modal -->
 <div id="taskFormModal" class="modal hidden">
   <div class="modal-content">
     <h3 id="formTitle">Nueva Tarea</h3>
     <form id="taskForm">
       <input type="hidden" id="taskId" />
+
+      <!-- Selección paciente -->
       <div class="form-group">
-        <label for="tipoPaciente" class="form-label">Agendar cita para:</label>
+        <label for="tipoPaciente">Agendar cita para:</label>
         <select id="tipoPaciente" class="form-input" onchange="mostrarSecciones()">
-          <option value="">Seleccione...</option>
+          <option value="">Seleccione</option>
           <option value="cotizante">Cotizante</option>
           <option value="beneficiario">Beneficiario</option>
         </select>
       </div>
 
-      <div id="seccionCotizante" style="display: none;">
-        <h4>Datos del Paciente/Cotizante</h4>
+      <!-- Cotizante -->
+      <div id="seccionCotizante" style="display:none;">
         <div class="form-group">
-          <label for="nombreCotizanteBuscar" class="form-label">Nombre completo del paciente/cotizante:</label>
-          <div class="input-group">
-            <input type="text" id="nombreCotizanteBuscar" class="form-input" placeholder="Ej: Juan Pérez">
-            <button class="btn btn-primary btn-search" type="button" onclick="buscarCotizante()">Buscar</button>
+          <label>Nombre completo:</label>
+          <div style="display:flex;gap:5px;">
+            <input type="text" id="nombreCotizanteBuscar" class="form-input">
+            <button type="button" class="btn btn-primary" onclick="buscarCotizante()">Buscar</button>
           </div>
         </div>
-        <div class="form-group">
-          <label for="tipoIdentificacionCotizante" class="form-label">Tipo de Identificación:</label>
-          <select id="tipoIdentificacionCotizante" class="form-input">
-            <option value="">Seleccione</option>
-            <option value="CC">CC</option>
-            <option value="TI">TI</option>
-            <option value="CE">CE</option>
-            <option value="PA">PA</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="numeroIdentificacionCotizante" class="form-label">Número de Identificación:</label>
-          <input type="text" id="numeroIdentificacionCotizante" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="fechaExpedicionCotizante" class="form-label">Fecha de Expedición Cédula:</label>
-          <input type="date" id="fechaExpedicionCotizante" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="celularCotizante" class="form-label">Celular:</label>
-          <input type="tel" id="celularCotizante" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="epsCotizante" class="form-label">EPS:</label>
-          <input type="text" id="epsCotizante" class="form-input">
-        </div>
+        <div class="form-group"><label>Tipo Identificación:</label><input type="text" id="tipoIdentificacionCotizante" class="form-input"></div>
+        <div class="form-group"><label>Número Identificación:</label><input type="text" id="numeroIdentificacionCotizante" class="form-input"></div>
+        <div class="form-group"><label>EPS:</label><input type="text" id="epsCotizante" class="form-input"></div>
+        <div class="form-group"><label>Celular:</label><input type="text" id="celularCotizante" class="form-input"></div>
       </div>
 
-      <div id="seccionBeneficiario" style="display: none;">
-        <h4>Datos del Cotizante Asociado</h4>
+      <!-- Beneficiario -->
+      <div id="seccionBeneficiario" style="display:none;">
         <div class="form-group">
-          <label for="nombreBeneficiarioBuscar" class="form-label">Nombre completo del beneficiario:</label>
-          <div class="input-group">
-            <input type="text" id="nombreBeneficiarioBuscar" class="form-input" placeholder="Ej: Ana García">
-            <button class="btn btn-primary btn-search" type="button" onclick="buscarBeneficiario()">Buscar</button>
+          <label>Nombre Beneficiario:</label>
+          <div style="display:flex;gap:5px;">
+            <input type="text" id="nombreBeneficiarioBuscar" class="form-input">
+            <button type="button" class="btn btn-primary" onclick="buscarBeneficiario()">Buscar</button>
           </div>
         </div>
-        <div class="form-group">
-          <label for="nombreCotizanteBeneficiario" class="form-label">Nombre del Cotizante:</label>
-          <input type="text" id="nombreCotizanteBeneficiario" class="form-input" readonly>
-        </div>
-        <div class="form-group">
-          <label for="tipoIdentificacionCotizanteBeneficiario" class="form-label">Tipo Identificación del Cotizante:</label>
-          <select id="tipoIdentificacionCotizanteBeneficiario" class="form-input">
-            <option value="">Seleccione</option>
-            <option value="CC">CC</option>
-            <option value="TI">TI</option>
-            <option value="CE">CE</option>
-            <option value="PA">PA</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="numeroIdentificacionCotizanteBeneficiario" class="form-label">Número de Identificación del Cotizante:</label>
-          <input type="text" id="numeroIdentificacionCotizanteBeneficiario" class="form-input" readonly>
-        </div>
-
-        <h4>Datos del Beneficiario/Paciente</h4>
-        <div class="form-group">
-          <label for="tipoIdentificacionBeneficiario" class="form-label">Tipo de Identificación:</label>
-          <select id="tipoIdentificacionBeneficiario" class="form-input">
-            <option value="">Seleccione</option>
-            <option value="CC">CC</option>
-            <option value="TI">TI</option>
-            <option value="CE">CE</option>
-            <option value="PA">PA</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="numeroIdentificacionBeneficiario" class="form-label">Número de Identificación:</label>
-          <input type="text" id="numeroIdentificacionBeneficiario" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="fechaExpedicionBeneficiario" class="form-label">Fecha de Expedición Cédula:</label>
-          <input type="date" id="fechaExpedicionBeneficiario" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="celularBeneficiario" class="form-label">Celular:</label>
-          <input type="tel" id="celularBeneficiario" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="parentescoBeneficiario" class="form-label">Parentesco:</label>
-          <input type="text" id="parentescoBeneficiario" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="epsBeneficiario" class="form-label">EPS:</label>
-          <input type="text" id="epsBeneficiario" class="form-input" readonly>
-        </div>
+        <div class="form-group"><label>Cotizante Asociado:</label><input type="text" id="nombreCotizanteBeneficiario" class="form-input" readonly></div>
+        <div class="form-group"><label>Número Identificación Beneficiario:</label><input type="text" id="numeroIdentificacionBeneficiario" class="form-input"></div>
+        <div class="form-group"><label>EPS:</label><input type="text" id="epsBeneficiario" class="form-input"></div>
+        <div class="form-group"><label>Celular:</label><input type="text" id="celularBeneficiario" class="form-input"></div>
       </div>
 
-      <div id="seccionDatosTarea" style="display: none;">
-        <h4>Datos de la Tarea</h4>
-        <div class="form-group">
-          <label for="tipoTarea" class="form-label">Tipo de Tarea:</label>
+      <!-- Datos Tarea -->
+      <div id="seccionDatosTarea" style="display:none;">
+        <div class="form-group"><label>Tipo Tarea:</label>
           <select id="tipoTarea" class="form-input">
             <option value="">Seleccione</option>
-            <option value="agendar especialista">Agendar Especialista</option>
-            <option value="agendar medicina general">Agendar Medicina General</option>
-            <option value="agendar odontologia">Agendar Odontología</option>
-            <option value="gestionar autorizaciones">Gestionar Autorizaciones</option>
-            <option value="agendar laboratorio">Agendar Laboratorio</option>
-            <option value="agendar examen">Agendar Examen</option>
+            <option value="agendar especialista">Especialista</option>
+            <option value="agendar medicina general">Medicina General</option>
+            <option value="agendar laboratorio">Laboratorio</option>
+            <option value="agendar examen">Examen</option>
           </select>
         </div>
-        <div class="form-group">
-          <label for="numeroAutorizacion" class="form-label">Número de Autorización (si aplica):</label>
-          <input type="text" id="numeroAutorizacion" class="form-input">
+        <div class="form-group"><label>Prioridad:</label>
+          <select id="prioridad" class="form-input">
+            <option value="ALTA">Alta</option>
+            <option value="MEDIA" selected>Media</option>
+            <option value="BAJA">Baja</option>
+            <option value="URGENTE">Urgente</option>
+          </select>
         </div>
-        <div class="form-group">
-          <label for="numeroRadicado" class="form-label">Número de Radicado (si aplica):</label>
-          <input type="text" id="numeroRadicado" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="fechaCreacionTarea" class="form-label">Fecha de Creación de Tarea:</label>
-          <input type="text" id="fechaCreacionTarea" class="form-input" readonly>
-        </div>
-        <div class="form-group">
-          <label for="fechaCita" class="form-label">Fecha y Hora de la Cita:</label>
-          <input type="datetime-local" id="fechaCita" class="form-input" onchange="actualizarFechaRecordatorio()">
-        </div>
-        <div class="form-group">
-          <label for="doctorAtiende" class="form-label">Doctor que Atiende:</label>
-          <input type="text" id="doctorAtiende" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="lugarCita" class="form-label">Lugar de la Cita:</label>
-          <input type="text" id="lugarCita" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="direccionCita" class="form-label">Dirección de la Cita:</label>
-          <input type="text" id="direccionCita" class="form-input">
-        </div>
-        <div class="form-group">
-          <label for="fechaRecordatorio" class="form-label">Fecha Recordatorio (24 horas antes):</label>
-          <input type="datetime-local" id="fechaRecordatorio" class="form-input" readonly>
-        </div>
-        <div class="form-group">
-          <label for="observaciones" class="form-label">Observaciones:</label>
-          <textarea id="observaciones" class="form-input" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="especificacionesCita" class="form-label">Especificaciones de la Cita:</label>
-          <textarea id="especificacionesCita" class="form-input" rows="3"></textarea>
-        </div>
+        <div class="form-group"><label>Fecha Cita:</label><input type="datetime-local" id="fechaCita" class="form-input" onchange="actualizarRecordatorio()"></div>
+        <div class="form-group"><label>Doctor:</label><input type="text" id="doctorAtiende" class="form-input"></div>
+        <div class="form-group"><label>Lugar:</label><input type="text" id="lugarCita" class="form-input"></div>
+        <div class="form-group"><label>Dirección:</label><input type="text" id="direccionCita" class="form-input"></div>
+        <div class="form-group"><label>Recordatorio:</label><input type="datetime-local" id="fechaRecordatorio" class="form-input" readonly></div>
+        <div class="form-group"><label>Observaciones:</label><textarea id="observaciones" class="form-input"></textarea></div>
+        <div class="form-group"><label>Especificaciones:</label><textarea id="especificacionesCita" class="form-input"></textarea></div>
       </div>
+
       <div class="form-buttons">
         <button type="submit" class="btn btn-success">Guardar</button>
         <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancelar</button>
@@ -259,600 +161,167 @@
 
 <script>
   const GATEWAY_URL = "http://localhost:8080";
-  const API_TASKS_URL = `${GATEWAY_URL}/api/v1/tareas`; // Nueva URL para las tareas
-  const API_PACIENTES_URL = `${GATEWAY_URL}/api/v1/pacientes`; // Nueva URL para pacientes (cotizantes/beneficiarios)
-  const AUTH_API_URL = `${GATEWAY_URL}/auth`; // URL para autenticación (ya estaba correcta)
-
+  const API_TASKS_URL = `${GATEWAY_URL}/api/v1/tareas`;
+  const API_PACIENTES_URL = `${GATEWAY_URL}/api/v1/pacientes`;
   const token = localStorage.getItem("token");
   let tasks = [];
 
-  const statusOrder = [
-    "PENDIENTE",
-    "EN_PROGRESO",
-    "CITA_CONFIRMADA",
-    "ENVIADA",
-    "COMPLETADA"
-  ];
+  const estados = ["PENDIENTE","EN_PROGRESO","CITA_CONFIRMADA","ENVIADA","COMPLETADA"];
 
-  if (!token) {
-    alert("Debes iniciar sesión primero.");
-    window.location.href = "index.html";
+  if(!token){ alert("Debes iniciar sesión"); window.location="index.html"; }
+
+  function showNotification(msg,type="success"){
+    const n=document.getElementById("notification");
+    n.textContent=msg; n.style.background=type==="error"?"#e74c3c":"#2ecc71";
+    n.classList.add("show"); setTimeout(()=>n.classList.remove("show"),3000);
   }
 
-  async function fetchTasks() {
-    try {
-      const res = await fetch(API_TASKS_URL, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("No autorizado");
-      tasks = await res.json();
-      renderTasks();
-    } catch (e) {
-      showNotification("Error al cargar tareas", "error");
-      console.error(e);
-    }
+  async function fetchTasks(){
+    const res=await fetch(API_TASKS_URL,{headers:{Authorization:`Bearer ${token}`}});
+    tasks=await res.json(); renderTasks();
   }
 
-  // Función para mostrar/ocultar secciones basadas en la selección de tipo de paciente
-  function mostrarSecciones() {
-    const tipoPaciente = document.getElementById('tipoPaciente').value;
-    document.getElementById('seccionCotizante').style.display = 'none';
-    document.getElementById('seccionBeneficiario').style.display = 'none';
-    document.getElementById('seccionDatosTarea').style.display = 'none'; // Siempre visible si selecciona algo
-
-    if (tipoPaciente === 'cotizante') {
-      document.getElementById('seccionCotizante').style.display = 'block';
-      document.getElementById('seccionDatosTarea').style.display = 'block';
-    } else if (tipoPaciente === 'beneficiario') {
-      document.getElementById('seccionBeneficiario').style.display = 'block';
-      document.getElementById('seccionDatosTarea').style.display = 'block';
-    }
-    // Auto-fill creation date whenever a type is selected
-    if (tipoPaciente) {
-      document.getElementById('fechaCreacionTarea').value = new Date().toISOString().slice(0, 16);
-    } else {
-      document.getElementById('fechaCreacionTarea').value = '';
-    }
-  }
-
-  // Función para buscar cotizante y pre-llenar datos
-  async function buscarCotizante() {
-    const nombreBuscar = document.getElementById('nombreCotizanteBuscar').value.trim();
-    if (!nombreBuscar) {
-      showNotification('Por favor, ingrese un nombre para buscar al cotizante.', 'error');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_PACIENTES_URL}/cotizante?nombre=${encodeURIComponent(nombreBuscar)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const cotizantes = await response.json();
-        if (cotizantes && cotizantes.length > 0) {
-          const cotizante = cotizantes[0]; // Tomar el primer resultado
-          document.getElementById('tipoIdentificacionCotizante').value = cotizante.tipo_identificacion || '';
-          document.getElementById('numeroIdentificacionCotizante').value = cotizante.numero_identificacion || '';
-          document.getElementById('fechaExpedicionCotizante').value = cotizante.fecha_expedicion || '';
-          document.getElementById('celularCotizante').value = cotizante.celular || '';
-          document.getElementById('epsCotizante').value = cotizante.eps || '';
-          showNotification('Cotizante encontrado y datos precargados.');
-        } else {
-          showNotification('Cotizante no encontrado. Complete los datos para registrarlo.', 'error');
-          limpiarCamposCotizante();
-        }
-      } else {
-        showNotification('Error al buscar cotizante. Si no existe, complete los datos.', 'error');
-        limpiarCamposCotizante();
-      }
-    } catch (error) {
-      console.error('Error buscando cotizante:', error);
-      showNotification('Ocurrió un error al buscar el cotizante.', 'error');
-      limpiarCamposCotizante();
-    }
-  }
-
-  // Función para buscar beneficiario y pre-llenar datos del beneficiario y su cotizante
-  async function buscarBeneficiario() {
-    const nombreBuscar = document.getElementById('nombreBeneficiarioBuscar').value.trim();
-    if (!nombreBuscar) {
-      showNotification('Por favor, ingrese un nombre para buscar al beneficiario.', 'error');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_PACIENTES_URL}/beneficiario?nombre=${encodeURIComponent(nombreBuscar)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        const beneficiarios = await response.json();
-        if (beneficiarios && beneficiarios.length > 0) {
-          const beneficiario = beneficiarios[0]; // Tomar el primer resultado
-          document.getElementById('tipoIdentificacionBeneficiario').value = beneficiario.tipo_identificacion || '';
-          document.getElementById('numeroIdentificacionBeneficiario').value = beneficiario.numero_identificacion || '';
-          document.getElementById('fechaExpedicionBeneficiario').value = beneficiario.fecha_expedicion || '';
-          document.getElementById('celularBeneficiario').value = beneficiario.celular || '';
-          document.getElementById('parentescoBeneficiario').value = beneficiario.parentesco || '';
-          document.getElementById('epsBeneficiario').value = beneficiario.eps || '';
-
-          // Intentar cargar datos del cotizante asociado
-          if (beneficiario.cotizante_documento) {
-            const cotizanteResponse = await fetch(`${API_PACIENTES_URL}/cotizantes/${beneficiario.cotizante_documento}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (cotizanteResponse.ok) {
-              const cotizante = await cotizanteResponse.json();
-              document.getElementById('nombreCotizanteBeneficiario').value = cotizante.nombre_completo || '';
-              document.getElementById('tipoIdentificacionCotizanteBeneficiario').value = cotizante.tipo_identificacion || '';
-              document.getElementById('numeroIdentificacionCotizanteBeneficiario').value = cotizante.numero_identificacion || '';
-              showNotification('Beneficiario y cotizante asociados encontrados y datos precargados.');
-            } else {
-              showNotification('Beneficiario encontrado, pero no se pudieron cargar los datos del cotizante asociado.', 'error');
-              limpiarCamposCotizanteBeneficiario();
-            }
-          } else {
-            showNotification('Beneficiario encontrado, pero no tiene cotizante asociado. Complete los datos del cotizante.', 'error');
-            limpiarCamposCotizanteBeneficiario();
-          }
-        } else {
-          showNotification('Beneficiario no encontrado. Complete los datos para registrarlo.', 'error');
-          limpiarCamposBeneficiario();
-          limpiarCamposCotizanteBeneficiario();
-        }
-      } else {
-        showNotification('Error al buscar beneficiario. Si no existe, complete los datos.', 'error');
-        limpiarCamposBeneficiario();
-        limpiarCamposCotizanteBeneficiario();
-      }
-    } catch (error) {
-      console.error('Error buscando beneficiario:', error);
-      showNotification('Ocurrió un error al buscar el beneficiario.', 'error');
-      limpiarCamposBeneficiario();
-      limpiarCamposCotizanteBeneficiario();
-    }
-  }
-
-  // Funciones para limpiar campos
-  function limpiarCamposCotizante() {
-    document.getElementById('nombreCotizanteBuscar').value = ''; // Clear search name too
-    document.getElementById('tipoIdentificacionCotizante').value = '';
-    document.getElementById('numeroIdentificacionCotizante').value = '';
-    document.getElementById('fechaExpedicionCotizante').value = '';
-    document.getElementById('celularCotizante').value = '';
-    document.getElementById('epsCotizante').value = '';
-  }
-
-  function limpiarCamposBeneficiario() {
-    document.getElementById('nombreBeneficiarioBuscar').value = ''; // Clear search name too
-    document.getElementById('tipoIdentificacionBeneficiario').value = '';
-    document.getElementById('numeroIdentificacionBeneficiario').value = '';
-    document.getElementById('fechaExpedicionBeneficiario').value = '';
-    document.getElementById('celularBeneficiario').value = '';
-    document.getElementById('parentescoBeneficiario').value = '';
-    document.getElementById('epsBeneficiario').value = '';
-  }
-
-  function limpiarCamposCotizanteBeneficiario() {
-    document.getElementById('nombreCotizanteBeneficiario').value = '';
-    document.getElementById('tipoIdentificacionCotizanteBeneficiario').value = '';
-    document.getElementById('numeroIdentificacionCotizanteBeneficiario').value = '';
-  }
-
-  // Función para actualizar la fecha de recordatorio (24 horas antes)
-  function actualizarFechaRecordatorio() {
-    const fechaCitaInput = document.getElementById('fechaCita').value;
-    if (fechaCitaInput) {
-      const fechaCita = new Date(fechaCitaInput);
-      const fechaRecordatorio = new Date(fechaCita.getTime() - (24 * 60 * 60 * 1000)); // Restar 24 horas
-      document.getElementById('fechaRecordatorio').value = fechaRecordatorio.toISOString().slice(0, 16);
-    } else {
-      document.getElementById('fechaRecordatorio').value = '';
-    }
-  }
-
-  // Función para enviar recordatorio (Gmail y WhatsApp)
-  function sendReminder(id) {
-    const t = tasks.find(task => task.id === id);
-    if (!t) {
-      showNotification("Tarea no encontrada para enviar recordatorio.", "error");
-      return;
-    }
-
-    const nombrePaciente = t.paciente; // Usamos el nombre del paciente de la tarea
-    const celular = t.telefono;
-
-    if (!celular) {
-      showNotification('Número de celular no disponible para enviar recordatorio por WhatsApp.', 'error');
-      return;
-    }
-
-    const fechaCita = new Date(t.fecha + 'T' + t.hora); // Combina fecha y hora para crear un objeto Date
-    const fechaFormato = fechaCita.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const horaFormato = fechaCita.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-    const subject = `Recordatorio de Cita Serviconli para ${nombrePaciente}`;
-    let body = `Hola señor/a ${nombrePaciente},\n\n`;
-    body += `Le saluda Biviana de la Central de Citas de Serviconli. 🌿\n\n`;
-    body += `Me permito recordarle que tiene una cita programada el día ${fechaFormato} a las ${horaFormato}, en ${t.ubicacion}, con el doctor/a ${t.doctor}.\n\n`;
-    body += `En Serviconli estamos comprometidos con su bienestar y el de su familia. Si tiene alguna inquietud, no dude en contactarnos.\n\n`;
-    body += `¡Gracias por confiar en nosotros! 💙\n\n`;
-    body += `— Equipo Serviconli`;
-
-    // Enviar a Gmail (abre el cliente de correo)
-    // Asume que no tienes el email del paciente en la tarea.
-    // Si lo tuvieras, deberías incluirlo en t.email y usarlo aquí: `mailto:${t.email}?`
-    const gmailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
-
-    // También abrir bandeja de WhatsApp con el mensaje
-    const whatsappUrl = `https://wa.me/57${celular}?text=${encodeURIComponent(body)}`; // Asume código de país 57 para Colombia
-    window.open(whatsappUrl, '_blank');
-  }
-
-  function renderTasks() {
-    const kanban = document.getElementById("kanban");
-    kanban.innerHTML = "";
-
-    statusOrder.forEach(status => {
-      const col = document.createElement("div");
-      col.className = "kanban-column";
-      col.dataset.status = status;
-
-      const tasksFiltered = getFilteredTasks().filter(t => t.estado === status);
-
-      col.innerHTML = `
-        <div class="column-header">
-          <div class="column-title">
-            ${getStatusLabel(status)}
-            <span class="column-count" id="count-${status}">${tasksFiltered.length}</span>
-          </div>
-        </div>
-        <div class="column-content" id="column-${status}">
-          ${tasksFiltered.length === 0 ? `<div class="empty-state">No hay tareas en esta columna</div>` : ""}
-        </div>
-      `;
+  function renderTasks(){
+    const kanban=document.getElementById("kanban"); kanban.innerHTML="";
+    estados.forEach(e=>{
+      const col=document.createElement("div");
+      col.className="kanban-column";
+      const lista=tasks.filter(t=>t.estado===e);
+      col.innerHTML=`<h4>${e} (${lista.length})</h4>`;
+      lista.forEach(t=>col.appendChild(createCard(t)));
       kanban.appendChild(col);
-
-      const content = col.querySelector(".column-content");
-      tasksFiltered.forEach(task => {
-        content.appendChild(createTaskCard(task));
-      });
     });
   }
 
-  function getStatusLabel(status) {
-    switch (status) {
-      case "PENDIENTE": return "📋 Pendientes";
-      case "EN_PROGRESO": return "⏳ En Progreso";
-      case "CITA_CONFIRMADA": return "✅ Cita Confirmada";
-      case "COMPLETADA": return "📤 Completadas";
-      case "ENVIADA": return "📨 Enviadas";
-      default: return status;
+  function createCard(t){
+    const div=document.createElement("div");
+    div.className="task-card";
+    div.innerHTML=`
+        <b>${t.tipo}</b><br>
+        ${t.paciente} - ${t.telefono || ""}<br>
+        ${t.fecha} ${t.hora}<br>
+        <div class="task-actions">
+          <button onclick="sendWhatsApp(${t.id})">📲</button>
+          <button onclick="advanceStatus(${t.id})">➡️</button>
+          <button onclick="editTask(${t.id})">✏️</button>
+          <button onclick="deleteTask(${t.id})">🗑️</button>
+        </div>`;
+    return div;
+  }
+
+  function mostrarSecciones(){
+    const tipo=document.getElementById("tipoPaciente").value;
+    document.getElementById("seccionCotizante").style.display=tipo==="cotizante"?"block":"none";
+    document.getElementById("seccionBeneficiario").style.display=tipo==="beneficiario"?"block":"none";
+    document.getElementById("seccionDatosTarea").style.display=tipo!==""?"block":"none";
+  }
+
+  async function buscarCotizante(){
+    const nombre=document.getElementById("nombreCotizanteBuscar").value;
+    const res=await fetch(`${API_PACIENTES_URL}/cotizante?nombre=${encodeURIComponent(nombre)}`,{headers:{Authorization:`Bearer ${token}`}});
+    const data=await res.json();
+    const c=Array.isArray(data)?data[0]:data;
+    if(!c) return showNotification("Cotizante no encontrado","error");
+    document.getElementById("tipoIdentificacionCotizante").value=c.tipo_identificacion||"";
+    document.getElementById("numeroIdentificacionCotizante").value=c.numero_identificacion||"";
+    document.getElementById("epsCotizante").value=c.eps||"";
+    document.getElementById("celularCotizante").value=c.celular||"";
+  }
+
+  async function buscarBeneficiario(){
+    const nombre=document.getElementById("nombreBeneficiarioBuscar").value;
+    const res=await fetch(`${API_PACIENTES_URL}/beneficiario?nombre=${encodeURIComponent(nombre)}`,{headers:{Authorization:`Bearer ${token}`}});
+    const data=await res.json();
+    const b=Array.isArray(data)?data[0]:data;
+    if(!b) return showNotification("Beneficiario no encontrado","error");
+    document.getElementById("nombreCotizanteBeneficiario").value=b.cotizante_nombre||"";
+    document.getElementById("numeroIdentificacionBeneficiario").value=b.numero_identificacion||"";
+    document.getElementById("epsBeneficiario").value=b.eps||"";
+    document.getElementById("celularBeneficiario").value=b.celular||"";
+  }
+
+  function actualizarRecordatorio(){
+    const fecha=document.getElementById("fechaCita").value;
+    if(fecha){
+      const f=new Date(fecha); f.setDate(f.getDate()-1);
+      document.getElementById("fechaRecordatorio").value=f.toISOString().slice(0,16);
     }
   }
 
-  function getFilteredTasks() {
-    const fStatus = document.getElementById("filterStatus").value;
-    const fType = document.getElementById("filterType").value;
-    const fPriority = document.getElementById("filterPriority").value;
-    return tasks.filter(t =>
-            (!fStatus || t.estado === fStatus) &&
-            (!fType || t.tipo === fType) &&
-            (!fPriority || t.prioridad === fPriority)
-    );
-  }
-
-  function createTaskCard(t) {
-    const card = document.createElement("div");
-    card.className = "task-card";
-    card.innerHTML = `
-      <h4>${t.tipo}</h4>
-      <p>👤 ${t.paciente} | ☎ ${t.telefono || "-"}</p>
-      <p>🏥 ${t.eps || "-"} | 👨‍⚕️ ${t.doctor || "-"}</p>
-      <p>📍 ${t.ubicacion || "-"} | 📅 ${t.fecha || ""} ${t.hora || ""}</p>
-      <p>📝 ${t.observaciones || ""}</p>
-      <div class="task-actions">
-        <button onclick="sendWhatsApp(${t.id})">📲</button>
-        <button onclick="sendReminder(${t.id})">🔔</button>
-        <button onclick="advanceStatus(${t.id})">➡️</button>
-        <button onclick="editTask(${t.id})">✏️</button>
-        <button onclick="deleteTask(${t.id})">🗑️</button>
-      </div>
-    `;
-    return card;
-  }
-
-  async function advanceStatus(id) {
-    const task = tasks.find(t => t.id === id);
-    const currentIndex = statusOrder.indexOf(task.estado);
-    if (currentIndex < statusOrder.length - 1) {
-      const nuevoEstado = statusOrder[currentIndex + 1];
-      try {
-        const res = await fetch(`${API_TASKS_URL}/${id}/estado/${nuevoEstado}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (!res.ok) throw new Error("No se pudo actualizar");
-        task.estado = nuevoEstado;
-        renderTasks();
-        showNotification("Estado actualizado");
-      } catch (e) {
-        showNotification("Error al actualizar estado", "error");
-        console.error(e);
-      }
-    }
-  }
-
-  function sendWhatsApp(id) {
-    const t = tasks.find(task => task.id === id);
-    if (!t) {
-      showNotification("Tarea no encontrada para enviar WhatsApp.", "error");
-      return;
-    }
-
-    if (!t.telefono) { // Assumes t.telefono holds the patient's phone number
-      showNotification("Sin número telefónico para enviar WhatsApp.", "error");
-      return;
-    }
-
-    const nombreCompleto = t.paciente; // Nombre del paciente de la tarea
-    const tipoCita = t.tipo; // "agendar especialista", "agendar laboratorio", etc.
-    const fechaCita = new Date(t.fecha + 'T' + t.hora); // Combina fecha y hora de la tarea
-    const diaSemana = fechaCita.toLocaleDateString('es-ES', { weekday: 'long' });
-    const dia = fechaCita.getDate();
-    const mes = fechaCita.toLocaleDateString('es-ES', { month: 'long' });
-    const anio = fechaCita.getFullYear();
-    const hora = fechaCita.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const doctorAtiende = t.doctor;
-    const lugarCita = t.ubicacion;
-    const direccionCita = t.direccion_cita || t.ubicacion; // Si no hay dirección específica, usa ubicación
-    const especificaciones = t.especificaciones_cita || ""; // Asegúrate que 'especificaciones_cita' esté en el objeto 't' de la tarea
-
-    let mensaje = `La cita de *${nombreCompleto.toUpperCase()}* para *${tipoCita.toUpperCase()}* fue asignada para el día *${diaSemana.toUpperCase()}* *${dia}* de *${mes.toUpperCase()}* del *${anio}* a las *${hora}* con el DR.*${doctorAtiende.toUpperCase()}*. En *${lugarCita}* *${direccionCita}*, recuerde llegar 30 minutos antes con el documento de identidad original, cuota moderadora y tapabocas.`;
-
-    if (especificaciones) {
-      mensaje += `\n*ESPECIFICACIONES: ${especificaciones.toUpperCase()}*`; // Y aquí va la especificación real
-    }
-
-    const url = `https://wa.me/57${t.telefono}?text=${encodeURIComponent(mensaje)}`; // Asume código de país 57 para Colombia
-    window.open(url, "_blank");
-  }
-
-  function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "index.html";
-  }
-
-  function showNotification(msg, type = "success") {
-    const n = document.getElementById("notification");
-    n.textContent = msg;
-    n.style.background = type === "error" ? "#ef4444" : "#10b981";
-    n.classList.add("show");
-    setTimeout(() => n.classList.remove("show"), 3000);
-  }
-
-  function showCreateForm(task = null) {
-    document.getElementById("formTitle").textContent = task ? "Editar Tarea" : "Nueva Tarea";
-    document.getElementById("taskId").value = task?.id || "";
-
-    // Reset and hide all new sections when opening the form
-    document.getElementById('tipoPaciente').value = '';
-    document.getElementById('seccionCotizante').style.display = 'none';
-    document.getElementById('seccionBeneficiario').style.display = 'none';
-    document.getElementById('seccionDatosTarea').style.display = 'none';
-
-    // Clear all patient/cotizante/beneficiary fields
-    limpiarCamposCotizante();
-    limpiarCamposBeneficiario();
-    limpiarCamposCotizanteBeneficiario();
-
-    // Clear task specific fields
-    document.getElementById("tipoTarea").value = '';
-    document.getElementById("numeroAutorizacion").value = '';
-    document.getElementById("numeroRadicado").value = '';
-    document.getElementById("fechaCreacionTarea").value = '';
-    document.getElementById("fechaCita").value = '';
-    document.getElementById("doctorAtiende").value = '';
-    document.getElementById("lugarCita").value = '';
-    document.getElementById("direccionCita").value = '';
-    document.getElementById("fechaRecordatorio").value = '';
-    document.getElementById("observaciones").value = '';
-    document.getElementById("especificacionesCita").value = '';
-
-
-    if (task) {
-      // If editing an existing task, try to pre-fill common task data
-      // Note: Patient/Cotizante/Beneficiary data is NOT stored in the current 'task' object
-      // so these sections will not be pre-filled automatically based on 'task'.
-      // The user would need to re-select 'Cotizante' or 'Beneficiario' and search again.
-      // Consider modifying your backend to include patient details (cotizante_id/beneficiario_id)
-      // in the task object if you want full pre-filling on edit.
-
-      // Pre-fill existing task data into the new "Datos de la Tarea" section
-      document.getElementById('tipoPaciente').value = task.isBeneficiary ? 'beneficiario' : 'cotizante'; // ASSUMPTION: task object indicates patient type
-      mostrarSecciones(); // Show appropriate sections based on retrieved type
-
-      // If you can get the full patient object (cotizante/beneficiary) linked to the task,
-      // you'd call 'buscarCotizante' or 'buscarBeneficiario' here
-      // e.g., if (task.patientId) {
-      //   if (task.isBeneficiary) buscarBeneficiarioById(task.patientId);
-      //   else buscarCotizanteById(task.patientId);
-      // }
-
-      document.getElementById("tipoTarea").value = task.tipo || ""; // Map old 'tipo' to new 'tipoTarea'
-      document.getElementById("doctorAtiende").value = task.doctor || ""; // Map old 'doctor' to new 'doctorAtiende'
-      document.getElementById("lugarCita").value = task.ubicacion || ""; // Map old 'ubicacion' to new 'lugarCita'
-      document.getElementById("fechaCita").value = (task.fecha && task.hora) ? `${task.fecha}T${task.hora}` : ''; // Combine
-      document.getElementById("observaciones").value = task.observaciones || "";
-
-      // New fields not in old 'task' object (will be empty unless backend sends them)
-      // document.getElementById("numeroAutorizacion").value = task.numero_autorizacion || "";
-      // document.getElementById("numeroRadicado").value = task.numero_radicado || "";
-      // document.getElementById("direccionCita").value = task.direccion_cita || "";
-      // document.getElementById("especificacionesCita").value = task.especificaciones_cita || "";
-      // document.getElementById("fechaCreacionTarea").value = task.fecha_creacion_tarea || ""; // Auto-filled on new
-      // document.getElementById("fechaRecordatorio").value = task.fecha_recordatorio || ""; // Auto-filled on new
-    }
-
-    document.getElementById("taskFormModal").classList.remove("hidden");
-  }
-
-
-  function closeForm() {
-    document.getElementById("taskForm").reset();
-    document.getElementById("taskFormModal").classList.add("hidden");
-    // Reset patient type selection and hide all sections
-    document.getElementById('tipoPaciente').value = '';
-    document.getElementById('seccionCotizante').style.display = 'none';
-    document.getElementById('seccionBeneficiario').style.display = 'none';
-    document.getElementById('seccionDatosTarea').style.display = 'none';
-  }
-
-  document.getElementById("taskForm").addEventListener("submit", async (e) => {
+  document.getElementById("taskForm").addEventListener("submit",async e=>{
     e.preventDefault();
-    const id = document.getElementById("taskId").value; // Empty if creating new task
-
-    const tipoPaciente = document.getElementById('tipoPaciente').value;
-    let pacienteData = {};
-    let cotizanteData = {}; // Solo relevante si es beneficiario y se necesita registrar/actualizar cotizante
-
-    // Gather patient data based on selection
-    let nombreCompletoPaciente = '';
-    let celularPaciente = '';
-
-    if (tipoPaciente === 'cotizante') {
-      nombreCompletoPaciente = document.getElementById('nombreCotizanteBuscar').value.trim();
-      celularPaciente = document.getElementById('celularCotizante').value.trim();
-      pacienteData = {
-        nombre_completo: nombreCompletoPaciente,
-        tipo_identificacion: document.getElementById('tipoIdentificacionCotizante').value,
-        numero_identificacion: document.getElementById('numeroIdentificacionCotizante').value,
-        fecha_expedicion: document.getElementById('fechaExpedicionCotizante').value,
-        celular: celularPaciente,
-        eps: document.getElementById('epsCotizante').value
-      };
-    } else if (tipoPaciente === 'beneficiario') {
-      nombreCompletoPaciente = document.getElementById('nombreBeneficiarioBuscar').value.trim();
-      celularPaciente = document.getElementById('celularBeneficiario').value.trim();
-      pacienteData = {
-        nombre_completo: nombreCompletoPaciente,
-        tipo_identificacion: document.getElementById('tipoIdentificacionBeneficiario').value,
-        numero_identificacion: document.getElementById('numeroIdentificacionBeneficiario').value,
-        fecha_expedicion: document.getElementById('fechaExpedicionBeneficiario').value,
-        celular: celularPaciente,
-        parentesco: document.getElementById('parentescoBeneficiario').value,
-        eps: document.getElementById('epsBeneficiario').value, // EPS del beneficiario (misma que cotizante)
-        cotizante_documento: document.getElementById('numeroIdentificacionCotizanteBeneficiario').value // Link to cotizante
-      };
-      cotizanteData = { // Data to potentially create/update cotizante if not found
-        nombre_completo: document.getElementById('nombreCotizanteBeneficiario').value,
-        tipo_identificacion: document.getElementById('tipoIdentificacionCotizanteBeneficiario').value,
-        numero_identificacion: document.getElementById('numeroIdentificacionCotizanteBeneficiario').value
-        // Add other cotizante fields if your backend needs them for creation/update here
-      };
-    } else {
-      showNotification('Por favor, seleccione si la cita es para un Cotizante o Beneficiario.', 'error');
-      return;
-    }
-
-    // Gather task data
-    const tareaData = {
-      tipo: document.getElementById('tipoTarea').value, // 'tipo' is used by backend, map 'tipoTarea' input
-      paciente: nombreCompletoPaciente, // Old 'paciente' field now uses the selected patient's full name
-      telefono: celularPaciente, // Old 'telefono' field now uses the selected patient's cellular
-      eps: (tipoPaciente === 'cotizante' ? document.getElementById('epsCotizante').value : document.getElementById('epsBeneficiario').value), // Old 'eps' field
-      prioridad : document.getElementById('prioridad').value, // This select is still in taskFormModal, ensure it is there
-      doctor: document.getElementById('doctorAtiende').value, // Map old 'doctor' to new 'doctorAtiende'
-      ubicacion: document.getElementById('lugarCita').value, // Map old 'ubicacion' to new 'lugarCita'
-      fecha: document.getElementById('fechaCita').value.split('T')[0], // Extract date part
-      hora: document.getElementById('fechaCita').value.split('T')[1], // Extract time part
-      observaciones: document.getElementById('observaciones').value,
-      // New fields for the backend
-      numero_autorizacion: document.getElementById('numeroAutorizacion').value,
-      numero_radicado: document.getElementById('numeroRadicado').value,
-      fecha_creacion_tarea: document.getElementById('fechaCreacionTarea').value,
-      direccion_cita: document.getElementById('direccionCita').value,
-      fecha_recordatorio: document.getElementById('fechaRecordatorio').value,
-      especificaciones_cita: document.getElementById('especificacionesCita').value
+    const id=document.getElementById("taskId").value;
+    const tipo=document.getElementById("tipoPaciente").value;
+    const nombre=tipo==="cotizante"?document.getElementById("nombreCotizanteBuscar").value:document.getElementById("nombreBeneficiarioBuscar").value;
+    const celular=tipo==="cotizante"?document.getElementById("celularCotizante").value:document.getElementById("celularBeneficiario").value;
+    const tarea={
+      tipoPaciente:tipo,
+      paciente:nombre,
+      telefono:celular,
+      tipo:document.getElementById("tipoTarea").value,
+      prioridad:document.getElementById("prioridad").value,
+      fecha:document.getElementById("fechaCita").value.split("T")[0],
+      hora:document.getElementById("fechaCita").value.split("T")[1],
+      doctor:document.getElementById("doctorAtiende").value,
+      ubicacion:document.getElementById("lugarCita").value,
+      direccion_cita:document.getElementById("direccionCita").value,
+      fecha_recordatorio:document.getElementById("fechaRecordatorio").value,
+      observaciones:document.getElementById("observaciones").value,
+      especificaciones_cita:document.getElementById("especificacionesCita").value
     };
-
-    // Basic validation for new required fields
-    if (!tareaData.tipo || !tareaData.fecha || !tareaData.hora || !tareaData.doctor || !tareaData.ubicacion) {
-      showNotification('Por favor, complete todos los campos obligatorios de la tarea.', 'error');
-      return;
-    }
-
-    // Construct the full payload for the backend
-    const payload = {
-      id: id || null, // Include id if editing
-      tipoPaciente: tipoPaciente,
-      paciente: pacienteData,
-      tarea: tareaData
-    };
-
-    // If it's a beneficiario and cotizante data is provided, include it
-    if (tipoPaciente === 'beneficiario' && cotizanteData.numero_identificacion) {
-      payload.cotizante = cotizanteData;
-    }
-
-    const method = id ? "PUT" : "POST";
-    const url = id ? `${API_TASKS_URL}/${id}` : API_TASKS_URL; // API_URL is for tasks
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Error al guardar tarea");
-      }
-      await fetchTasks();
-      closeForm();
-      showNotification(id ? "Tarea actualizada" : "Tarea creada");
-    } catch (e) {
-      showNotification(`Error al guardar: ${e.message}`, "error");
-      console.error(e);
-    }
+    const url=id?`${API_TASKS_URL}/${id}`:API_TASKS_URL;
+    const method=id?"PUT":"POST";
+    const res=await fetch(url,{method,headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(tarea)});
+    if(res.ok){ fetchTasks(); closeForm(); showNotification("Guardado correctamente"); }
+    else showNotification("Error al guardar","error");
   });
 
-  function editTask(id) {
-    const task = tasks.find(t => t.id === id);
-    if (task) showCreateForm(task);
-  }
+  function closeForm(){ document.getElementById("taskFormModal").classList.add("hidden"); document.getElementById("taskForm").reset(); }
 
-  async function deleteTask(id) {
-    console.log("Eliminando tarea ID:", id);
-    if (!confirm("¿Estás seguro de eliminar esta tarea?")) return;
-    try {
-      const res = await fetch(`${API_TASKS_URL}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("Error al eliminar");
-      showNotification("Tarea eliminada");
-      await fetchTasks();
-    } catch (e) {
-      showNotification("No se pudo eliminar", "error");
-      console.error(e);
+  function showCreateForm(task=null){
+    document.getElementById("formTitle").textContent=task?"Editar Tarea":"Nueva Tarea";
+    document.getElementById("taskId").value=task?task.id:"";
+    document.getElementById("taskFormModal").classList.remove("hidden");
+    if(task){
+      document.getElementById("tipoPaciente").value=task.tipoPaciente;
+      mostrarSecciones();
+      document.getElementById("tipoTarea").value=task.tipo;
+      document.getElementById("prioridad").value=task.prioridad;
+      document.getElementById("fechaCita").value=`${task.fecha}T${task.hora}`;
+      document.getElementById("doctorAtiende").value=task.doctor;
+      document.getElementById("lugarCita").value=task.ubicacion;
+      document.getElementById("direccionCita").value=task.direccion_cita||"";
+      document.getElementById("observaciones").value=task.observaciones||"";
+      document.getElementById("especificacionesCita").value=task.especificaciones_cita||"";
+      actualizarRecordatorio();
     }
   }
 
-    document.getElementById("filterStatus").addEventListener("change", renderTasks);
-    document.getElementById("filterType").addEventListener("change", renderTasks);
-    document.getElementById("filterPriority").addEventListener("change", renderTasks);
+  async function deleteTask(id){
+    if(!confirm("¿Eliminar tarea?")) return;
+    const res=await fetch(`${API_TASKS_URL}/${id}`,{method:"DELETE",headers:{Authorization:`Bearer ${token}`}});
+    if(res.ok){fetchTasks();showNotification("Tarea eliminada");} else showNotification("Error al eliminar","error");
+  }
 
-    window.onload = fetchTasks;
+  async function advanceStatus(id){
+    const task=tasks.find(t=>t.id===id);
+    const nextIndex=estados.indexOf(task.estado)+1;
+    if(nextIndex>=estados.length) return showNotification("Ya está completada","error");
+    task.estado=estados[nextIndex];
+    await fetch(`${API_TASKS_URL}/${id}`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(task)});
+    fetchTasks();
+  }
 
+  function sendWhatsApp(id){
+    const t=tasks.find(tt=>tt.id===id);
+    const msg=`La cita de *${t.paciente}* para *${t.tipo}* fue asignada para el día ${t.fecha} a las ${t.hora} con el DR. ${t.doctor} en ${t.ubicacion}. Recuerde llegar 30 minutos antes.`;
+    const url=`https://wa.me/57${t.telefono}?text=${encodeURIComponent(msg)}`;
+    window.open(url,"_blank");
+  }
+
+  function logout(){ localStorage.removeItem("token"); window.location="index.html"; }
+
+  fetchTasks();
 </script>
 </body>
 </html>
