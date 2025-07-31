@@ -1,12 +1,12 @@
 server:
-  port: 8082
+  port: 8083
 
 spring:
   application:
-    name: task-service
+    name: patient-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/data_central_de_citas?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/serviconli2025?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver

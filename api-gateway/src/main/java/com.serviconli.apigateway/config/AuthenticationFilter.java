@@ -14,9 +14,13 @@ import reactor.core.publisher.Mono;
 
 import java.security.Key;
 import java.util.List;
+import org.slf4j.Logger; // Importar Logger
+import org.slf4j.LoggerFactory; // Importar LoggerFactory
 
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class); // Instancia del logger
 
     @Value("${jwt.secret}")
     private String secret;
@@ -40,21 +44,21 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return chain.filter(exchange);
             }
 
-            // 1. Obtener el header de autorización
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-            // 2. Validar el header
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                logger.warn("Solicitud a ruta protegida sin token Bearer válido: {}", path); // Log aquí
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
-            // 3. Extraer y validar el token
             String token = authHeader.substring(7);
             try {
                 byte[] keyBytes = secret.getBytes();
                 Key key = Keys.hmacShaKeyFor(keyBytes);
                 Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             } catch (Exception e) {
+                // AQUÍ AÑADIMOS EL LOG DEL ERROR ESPECÍFICO
+                logger.error("Fallo en la validación del token JWT para la ruta {}: {}", path, e.getMessage());
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 

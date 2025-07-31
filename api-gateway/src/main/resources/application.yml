@@ -23,10 +23,10 @@ spring:
           filters:
             - name: AuthenticationFilter
 
-        - id: task-service-pacientes
-          uri: http://localhost:8082
+        - id: patient-service-route
+          uri: http://localhost:8083
           predicates:
-            - Path=/api/v1/pacientes/**
+            - Path=/api/v1/patients/**
           filters:
             - name: AuthenticationFilter
 

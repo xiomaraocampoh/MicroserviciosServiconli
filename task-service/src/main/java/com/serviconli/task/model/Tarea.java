@@ -122,4 +122,11 @@ public class Tarea {
     protected void onUpdate() {
         fechaActualizacion = LocalDateTime.now();
     }
+
+    public void setFechaCita(String fechaCita) {
+    }
+
+    public void setHoraCita(String horaCita) {
+    }
+
 }

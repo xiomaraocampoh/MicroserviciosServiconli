@@ -1,52 +1,39 @@
 package com.serviconli.task.dto;
 
-import com.serviconli.task.model.EstadoTarea;
-import com.serviconli.task.model.Prioridad;
-import com.serviconli.task.model.TipoPaciente;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.serviconli.task.model.TipoPaciente;
+import com.serviconli.task.model.TipoCita;
+import com.serviconli.task.model.Prioridad;
+import com.serviconli.task.model.EstadoTarea;
+import lombok.Data;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class TareaResponseDTO {
     private Long id;
-    private String tipo;
-    private String paciente;
-    private String eps;
-    private Prioridad prioridad;
-    private EstadoTarea estado;
-    private String observaciones;
-    private LocalDateTime fechaCreacion;
-    private LocalDateTime fechaActualizacion;
-    private LocalDateTime fechaRecordatorio;
 
-
-    private String telefono;
-    private String doctor;
-    private String ubicacion;
-    private String fecha; //fecha cita
-    private String hora; //hora cita
     private TipoPaciente tipoPaciente;
-
+    private String Paciente;
     private String tipoIdentificacionPaciente;
     private String numeroIdentificacionPaciente;
-    private LocalDate fechaExpedicion;
     private String celularPaciente;
-    private String parentezco;
+    private String parentesco;
 
-    private String nombreCotizante;
-    private String numeroIdentificacionCotizante;
-
+    private TipoCita tipoCita;
+    private Prioridad prioridad;
+    private String fecha;
+    private String hora;
+    private String doctor;
+    private String eps;
+    private String ubicacion;
+    private String especificaciones;
+    private String observaciones;
     private String numeroAutorizacion;
     private String numeroRadicado;
-    private String especificaciones;
+    private String fechaCita;
+    private String horaCita;
+    private String tipo;
 
-
-    // Podríamos incluir una lista de HistorialTareaResponseDTO aquí si queremos el historial directamente en la respuesta de la tarea
+    private EstadoTarea estado;
+    private String fechaCreacion;
+    private String fechaActualizacion;
 }

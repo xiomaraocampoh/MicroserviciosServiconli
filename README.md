@@ -63,85 +63,76 @@ ejemplo registras:
 }
  debe si o si tener un dominio @gruposerviconli.com
 
-Task Service (Rutas protegidas)
+T📡 Endpoints task-service
+Todos los endpoints requieren autorización con JWT (Authorization: Bearer <token>).
 
-| Método | Endpoint                                                   | Descripción                                      |
-| ------ |------------------------------------------------------------| ------------------------------------------------ |
-| GET    | `http://localhost:8080/api/v1/tareas`                      | Obtener todas las tareas                         |
-| GET    | `http://localhost:8080/api/v1/tareas/{id}`                 | Obtener una tarea por ID                         |
-| POST   | `http://localhost:8080/api/v1/tareas`                      | Crear una nueva tarea (cotizante o beneficiario) |
-| DELETE | `http://localhost:8080/api/v1/tareas/{id}`                 | Eliminar una tarea                               |
-| PATCH  | `http://localhost:8080/api/v1/tareas/3/estado/EN_PROGRESO` | Cambiar estado de la tarea (progresivamente)     |
+🔹 Gestión de Tareas
 
+| Método   | Endpoint                                                   | Descripción                                          |
+| -------- | ---------------------------------------------------------- | ---------------------------------------------------- |
+| `GET`    | `http://localhost:8080/api/v1/tareas`                                           | Obtener todas las tareas                             |
+| `GET`    | `/api/v1/tareas/{id}`                                      | Obtener una tarea por ID                             |
+| `POST`   | `/api/v1/tareas`                                           | Crear una nueva tarea                                |
+| `PUT`    | `/api/v1/tareas/{id}`                                      | Actualizar una tarea existente                       |
+| `DELETE` | `/api/v1/tareas/{id}`                                      | Eliminar una tarea por ID                            |
+| `PUT`    | `/api/v1/tareas/{id}/estado`                               | Cambiar el estado de una tarea (de forma progresiva) |
+| `GET`    | `/api/v1/tareas/filtrar?estado=EN_PROGRESO&prioridad=ALTA` | Filtrar tareas por estado y prioridad                |
 
-
-ejemplo body crear tarea: 
-
+Ejemplo POST /api/v1/tareas
+json
+Copiar código
 {
-"tipo": "Agendar Especialista",
-"paciente": "",
-"eps": "Sura",
+"tipo": "Cita médica",
+"paciente": "Carlos Ramírez",
+"eps": "SURA",
 "prioridad": "ALTA",
-"observaciones": "Consulta médica optometría",
-"tipoPaciente": "COTIZANTE",
+"estado": "PENDIENTE",
+"observaciones": "Paciente solicita exámenes previos.",
+"telefono": "3214567890",
+"doctor": "Dra. Gómez",
+"ubicacion": "Consultorio 3",
+"fecha": "2025-08-01",
+"hora": "09:30",
+"tipoPaciente": "BENEFICIARIO",
 "tipoIdentificacionPaciente": "CC",
-"numeroIdentificacionPaciente": "12345678",
-"fechaExpedicion": "",
-"celularPaciente": "31163388640",
-"numeroAutorizacion": "",
-"numeroRadicado": "",
-"especificaciones": "Especificaciones médicas",
-"fechaRecordatorio": "2025-07-28T12:00:00",
-"telefono": "31163388640"",
-"doctor": "Dra. López",
-"ubicacion": "Centro Médico",
-"fecha": "2025-07-30",
-"hora": "10:00"
+"numeroIdentificacionPaciente": "1234567890",
+"fechaExpedicion": "2015-04-20",
+"celularPaciente": "3214567890",
+"parentezco": "Hijo",
+"nombreCotizante": "Luis Ramírez",
+"numeroIdentificacionCotizante": "987654321",
+"numeroAutorizacion": "A-102938",
+"numeroRadicado": "R-483920",
+"especificaciones": "Ayuno de 12 horas",
+"fechaRecordatorio": "2025-07-31T09:00:00"
 }
-
-
-
-Task Service (pacientes / cotizantes)
-
-| Método | Endpoint                                                                   | Descripción                          |
-|--------|----------------------------------------------------------------------------|--------------------------------------|
-| POST   | http://localhost:8080/api/v1/pacientes/cotizante                           | crea cotizante                       |
-| GET    | `http://localhost:8080/api/v1/pacientes/cotizantes`                        | Obtener todos los cotizantes         |
-| GET    | `http://localhost:8080/api/v1/pacientes/cotizantes/{id}`                   | Obtener cotizante por ID o documento |
-| GET    | `http://localhost:8080/api/v1/pacientes/cotizantescotizante?name={nombre}` | Buscar cotizantes por nombre         |
-
-ejemplo crear cotizante: 
-
+🛠️ Ejemplo PUT /api/v1/tareas/{id}
+json
+Copiar código
 {
-"nombreCompleto": "Pedro Gómez",
-"tipoIdentificacion": "CC",
-"numeroIdentificacion": "1231231234",
-"fechaExpedicion": "2015-04-21",
-"celular": "3004567890",
-"eps": "SURA"
+"tipo": "Reprogramación de cita",
+"paciente": "Carlos Ramírez",
+"eps": "SURA",
+"prioridad": "MEDIA",
+"estado": "EN_PROGRESO",
+"observaciones": "Cambio de fecha por vacaciones.",
+"telefono": "3214567890",
+"doctor": "Dra. Gómez",
+"ubicacion": "Consultorio 5",
+"fecha": "2025-08-05",
+"hora": "14:00",
+"tipoPaciente": "BENEFICIARIO",
+"tipoIdentificacionPaciente": "CC",
+"numeroIdentificacionPaciente": "1234567890",
+"fechaExpedicion": "2015-04-20",
+"celularPaciente": "3214567890",
+"parentezco": "Hijo",
+"nombreCotizante": "Luis Ramírez",
+"numeroIdentificacionCotizante": "987654321",
+"numeroAutorizacion": "A-102938",
+"numeroRadicado": "R-483920",
+"especificaciones": "No requiere exámenes",
+"fechaRecordatorio": "2025-08-04T13:00:00"
 }
 
-
-| Método | Endpoint                                                              | Descripción                             |
-|--------|-----------------------------------------------------------------------|-----------------------------------------|
-| GET    | `http://localhost:8080/api/v1/pacientes/beneficiarios`                | Obtener todos los beneficiarios         |
-| GET    | `http://localhost:8080/api/v1/pacientes/beneficiarios/{id}`           | Obtener beneficiario por ID o documento |
-| GET    | `http://localhost:8080/api/v1/pacientes/beneficiario?nombre={NOMBRE}` | Buscar beneficiarios por nombre         |
-| Post   | http://localhost:8080/api/v1/pacientes/beneficiario                   | crear beneficiario                      |
-
-
-ejemplo crear beneficiario: 
-
-{
-"nombreCompleto": "María Ramírez",
-"tipoIdentificacion": "CC",
-"numeroIdentificacion": "3216549874",
-"fechaExpedicion": "2019-01-15",
-"celular": "3012345678",
-"parentesco": "Hija",
-"eps": "Sura",
-"nombreCotizante": "Pedro Gómez",
-"tipoIdentificacionCotizante": "CC",
-"numeroIdentificacionCotizante": "1231231234"
-}
 
